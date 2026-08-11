@@ -1,0 +1,20 @@
+# Database
+DATABASE_URL=postgresql+asyncpg://marketmind:marketmind_secret@localhost:5432/marketmind
+DATABASE_URL_SYNC=postgresql://marketmind:marketmind_secret@localhost:5432/marketmind
+
+# Redis
+REDIS_URL=redis://localhost:6379/0
+
+# App
+APP_ENV=development
+APP_DEBUG=true
+APP_NAME=MarketMind AI
+API_V1_PREFIX=/api/v1
+
+# External APIs
+BINANCE_WS_URL=wss://stream.binance.com:9443/ws
+BINANCE_REST_URL=https://api.binance.com/api/v3
+BCB_SGS_URL=https://api.bcb.gov.br/dados/serie/bcdata.sgs.{code}/dados
+
+# CORS
+CORS_ORIGINS=http://localhost:3000

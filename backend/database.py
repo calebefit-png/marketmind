@@ -1,6 +1,7 @@
 """Engine assíncrono e ciclo de vida do PostgreSQL/TimescaleDB."""
 
 from collections.abc import AsyncGenerator
+import asyncio
 import logging
 
 from fastapi import HTTPException
@@ -25,6 +26,8 @@ class Base(DeclarativeBase):
 
 engine: AsyncEngine | None = None
 AsyncSessionLocal: async_sessionmaker[AsyncSession] | None = None
+DB_HEALTH_TIMEOUT_SECONDS = 5
+DB_INIT_TIMEOUT_SECONDS = 10
 
 if settings.DATABASE_URL:
     engine = create_async_engine(
@@ -65,12 +68,15 @@ async def check_database() -> tuple[bool, str]:
     if engine is None:
         return False, "not_configured"
 
-    try:
+    async def ping() -> None:
         async with engine.connect() as connection:
             await connection.execute(text("SELECT 1"))
+
+    try:
+        await asyncio.wait_for(ping(), timeout=DB_HEALTH_TIMEOUT_SECONDS)
         return True, "connected"
-    except SQLAlchemyError:
-        logger.exception("Falha no healthcheck do PostgreSQL")
+    except (SQLAlchemyError, TimeoutError) as exc:
+        logger.warning("Healthcheck do PostgreSQL indisponível (%s)", type(exc).__name__)
         return False, "unavailable"
 
 
@@ -82,13 +88,16 @@ async def init_db() -> bool:
     # Importação tardia evita ciclo entre `database` e `models.candle`.
     from models.candle import Candle  # noqa: F401
 
-    try:
+    async def create_tables() -> None:
         async with engine.begin() as connection:
             await connection.run_sync(Base.metadata.create_all)
+
+    try:
+        await asyncio.wait_for(create_tables(), timeout=DB_INIT_TIMEOUT_SECONDS)
         logger.info("Banco inicializado; tabelas presentes: %s", list(Base.metadata.tables))
         return True
-    except SQLAlchemyError:
-        logger.exception("Falha ao inicializar tabelas do banco")
+    except (SQLAlchemyError, TimeoutError) as exc:
+        logger.warning("Falha ao inicializar tabelas do banco (%s)", type(exc).__name__)
         return False
 
 

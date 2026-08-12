@@ -44,8 +44,9 @@ class BinanceStreamService:
         return self._last_price
 
     def subscribe(self, callback: TickCallback) -> None:
-        """Registra um callback assíncrono chamado a cada novo tick recebido."""
-        self._subscribers.append(callback)
+        """Registra um callback assíncrono sem duplicá-lo em reloads."""
+        if callback not in self._subscribers:
+            self._subscribers.append(callback)
 
     def unsubscribe(self, callback: TickCallback) -> None:
         if callback in self._subscribers:
@@ -80,7 +81,7 @@ class BinanceStreamService:
                             ).isoformat(),
                             "source": "binance",
                         }
-                        print(f"[Binance] {payload['asset']} = {price}")
+                        logger.debug("Tick Binance %s = %.8f", payload["asset"], price)
                         await self._notify(payload)
             except (ConnectionClosed, OSError) as exc:
                 logger.warning("Conexão Binance perdida (%s). Reconectando em %ss", exc, backoff)

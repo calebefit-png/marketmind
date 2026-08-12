@@ -74,3 +74,5 @@ class HealthResponse(BaseModel):
     status: str = "ok"
     app: str
     env: str
+    version: str
+    database: str

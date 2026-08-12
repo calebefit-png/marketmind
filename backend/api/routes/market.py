@@ -5,13 +5,14 @@ Rotas HTTP de mercado: preço BTC em tempo real, Selic, e análise técnica.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 import logging
 
 import httpx
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Depends
 
 from config import settings
 from database import get_db
@@ -36,16 +37,21 @@ async def get_btc_price() -> PriceTick:
     price = binance_stream_service.last_price
 
     if price is None:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(
-                f"{settings.BINANCE_REST_URL}/ticker/price",
-                params={"symbol": "BTCUSDT"},
-            )
-            response.raise_for_status()
-            data = response.json()
-            price = float(data["price"])
-
-    from datetime import datetime, timezone
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.get(
+                    f"{settings.BINANCE_REST_URL}/ticker/price",
+                    params={"symbol": "BTCUSDT"},
+                )
+                response.raise_for_status()
+                data = response.json()
+                price = float(data["price"])
+        except (httpx.HTTPError, KeyError, TypeError, ValueError) as exc:
+            logger.warning("Binance REST indisponível: %s", type(exc).__name__)
+            raise HTTPException(
+                status_code=503,
+                detail="Cotação BTC indisponível no momento.",
+            ) from exc
 
     return PriceTick(
         asset="BTCUSDT",
@@ -60,9 +66,12 @@ async def get_selic() -> SelicResponse:
     """Retorna a taxa Selic atual, data de referência e variação, via API do BCB."""
     try:
         return await bcb_service.get_selic()
-    except (httpx.HTTPError, ValueError) as exc:
-        logger.exception("Falha ao buscar Selic no BCB")
-        raise HTTPException(status_code=502, detail=f"Falha ao consultar BCB: {exc}") from exc
+    except (httpx.HTTPError, ValueError, KeyError, TypeError) as exc:
+        logger.warning("Falha ao buscar Selic no BCB: %s", type(exc).__name__)
+        raise HTTPException(
+            status_code=502,
+            detail="Não foi possível consultar a Selic no BCB.",
+        ) from exc
 
 
 @router.get("/analysis/btc", response_model=AnalysisResponse)
@@ -77,7 +86,15 @@ async def get_btc_analysis(db: AsyncSession = Depends(get_db)) -> AnalysisRespon
         .order_by(Candle.time.desc())
         .limit(60)
     )
-    result = await db.execute(stmt)
+    try:
+        result = await db.execute(stmt)
+    except SQLAlchemyError as exc:
+        logger.exception("Falha ao consultar candles de BTC")
+        raise HTTPException(
+            status_code=503,
+            detail="Histórico de mercado indisponível no momento.",
+        ) from exc
+
     rows = list(reversed(result.scalars().all()))
 
     if len(rows) < 21:

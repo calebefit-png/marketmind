@@ -11,11 +11,11 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import SQLAlchemyError
 
-from database import get_db
+from database import AsyncSessionLocal
 from models.candle import Candle
 from schemas.prediction import (
     ConfidenceBand,
@@ -33,14 +33,13 @@ router = APIRouter(tags=["prediction"])
 
 @router.get(
     "/prediction/{asset}",
-    response_model=PredictionResponse,
+    response_model=PredictionResponse | ModelNotReliableResponse,
     responses={422: {"model": ModelNotReliableResponse}},
 )
 async def get_prediction(
     asset: str,
     horizon: int = Query(default=24, ge=1, le=90),
     timeframe: str = Query(default="1d"),
-    db: AsyncSession = Depends(get_db),
 ):
     asset_upper = asset.upper()
     loaded = model_registry.load(asset_upper)
@@ -64,8 +63,21 @@ async def get_prediction(
         .order_by(Candle.time.desc())
         .limit(120)
     )
-    result = await db.execute(stmt)
-    rows = list(reversed(result.scalars().all()))
+    if AsyncSessionLocal is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Banco de dados não configurado; defina DATABASE_URL no ambiente.",
+        )
+
+    try:
+        async with AsyncSessionLocal() as db:
+            result = await db.execute(stmt)
+            rows = list(reversed(result.scalars().all()))
+    except SQLAlchemyError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="Histórico de mercado indisponível no momento.",
+        ) from exc
 
     if len(rows) < 60:
         raise HTTPException(

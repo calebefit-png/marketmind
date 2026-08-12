@@ -77,7 +77,14 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  health: () => apiFetch<{ status: string; app: string; env: string }>("/health"),
+  health: () =>
+    apiFetch<{
+      status: "ok" | "degraded";
+      app: string;
+      env: string;
+      version: string;
+      database: "connected" | "not_configured" | "unavailable";
+    }>("/health"),
   btcPrice: () => apiFetch<PriceTick>("/market/btc"),
   selic: () => apiFetch<SelicResponse>("/macro/selic"),
   btcAnalysis: () => apiFetch<AnalysisResponse>("/analysis/btc"),

@@ -1,0 +1,46 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+secrets/
+credentials/
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+dist/
+coverage/
+
+# Local model artifacts (registry metadata remains versionable)
+models_store/*.pkl
+models_store/*.joblib
+models_store/**/*.pkl
+models_store/**/*.joblib
+
+# Local data and logs
+*.log
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Temporary upload artifacts from previous repository flattening
+Dockerfile (*)
+__init__ (*)
+download (*)
+env (*)

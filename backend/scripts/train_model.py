@@ -33,17 +33,23 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from sqlalchemy import select  # noqa: E402
 
-from database import AsyncSessionLocal  # noqa: E402
+from database import AsyncSessionLocal, dispose_db, init_db  # noqa: E402
 from models.candle import Candle  # noqa: E402
 from services.feature_engineering import FEATURE_COLUMNS, build_features  # noqa: E402
 from services.label_engine import DEFAULT_THRESHOLD, add_labels, label_distribution  # noqa: E402
 from services.model_registry import model_registry  # noqa: E402
-from services.predictive_model import train_walk_forward_model  # noqa: E402
+from services.predictive_model import (
+    MIN_OOS_YEARS,
+    train_walk_forward_model,
+)  # noqa: E402
 from services.technical_analysis import candles_to_dataframe  # noqa: E402
 
 
 async def load_candles(asset: str, timeframe: str) -> list[dict]:
     """Lê candles do PostgreSQL/TimescaleDB filtrando por asset e timeframe."""
+    if AsyncSessionLocal is None:
+        raise RuntimeError("DATABASE_URL não configurada")
+
     async with AsyncSessionLocal() as session:
         stmt = (
             select(Candle)
@@ -102,12 +108,21 @@ async def main(
     threshold: float,
     min_train_years: int,
 ) -> None:
+    if AsyncSessionLocal is None:
+        raise SystemExit("DATABASE_URL não configurada; defina a variável antes de treinar.")
+
+    if not await init_db():
+        raise SystemExit("Não foi possível inicializar/validar o banco antes do treino.")
+
     print(f"[1/6] Lendo candles de {asset} ({timeframe}) do PostgreSQL/TimescaleDB...")
-    candles = await load_candles(asset, timeframe)
-    if len(candles) < 100:
+    candles = await load_candles(asset.upper(), timeframe)
+    minimum_expected = 365 * (min_train_years + MIN_OOS_YEARS)
+    if len(candles) < minimum_expected:
         raise SystemExit(
             f"Histórico insuficiente ({len(candles)} candles) para {asset}/{timeframe}. "
-            "Rode scripts/seed_btc_history.py primeiro ou confira asset/timeframe."
+            f"São necessários aproximadamente {minimum_expected} candles "
+            f"({min_train_years} anos de treino + {MIN_OOS_YEARS} folds OOS). "
+            "Rode scripts/seed_btc_history.py --days-back 2920."
         )
     print(f"       {len(candles)} candles carregados.")
 
@@ -154,7 +169,7 @@ async def main(
         metrics=result.final_metrics,
     )
 
-    print_summary(asset, timeframe, horizon, saved_dir, result)
+    print_summary(asset.upper(), timeframe, horizon, saved_dir, result)
 
 
 if __name__ == "__main__":
@@ -166,12 +181,16 @@ if __name__ == "__main__":
     parser.add_argument("--min-train-years", type=int, default=5, help="Anos mínimos de treino antes do 1º fold de teste")
     args = parser.parse_args()
 
-    asyncio.run(
-        main(
-            asset=args.asset,
-            timeframe=args.timeframe,
-            horizon=args.horizon,
-            threshold=args.threshold,
-            min_train_years=args.min_train_years,
-        )
-    )
+    async def run() -> None:
+        try:
+            await main(
+                asset=args.asset,
+                timeframe=args.timeframe,
+                horizon=args.horizon,
+                threshold=args.threshold,
+                min_train_years=args.min_train_years,
+            )
+        finally:
+            await dispose_db()
+
+    asyncio.run(run())

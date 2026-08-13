@@ -1,5 +1,6 @@
 """Configuração central da aplicação via variáveis de ambiente."""
 
+import os
 from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -14,7 +15,8 @@ class Settings(BaseSettings):
 
     # App
     APP_NAME: str = "MarketMind AI"
-    APP_ENV: str = "development"
+    # Serviços Render recebem a variável RENDER; mantendo APP_ENV explícito como prioridade.
+    APP_ENV: str = os.getenv("APP_ENV", "production" if os.getenv("RENDER") else "development")
     APP_DEBUG: bool = False
     API_V1_PREFIX: str = "/api/v1"
     APP_VERSION: str = "0.2.0"

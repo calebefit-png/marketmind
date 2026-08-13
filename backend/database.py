@@ -29,9 +29,22 @@ AsyncSessionLocal: async_sessionmaker[AsyncSession] | None = None
 DB_HEALTH_TIMEOUT_SECONDS = 5
 DB_INIT_TIMEOUT_SECONDS = 10
 
+
+def _async_database_url(url: str) -> str:
+    """Normalize Render/PostgreSQL URLs for SQLAlchemy's psycopg3 async dialect."""
+    normalized = url.strip()
+    if normalized.startswith("postgres://"):
+        normalized = "postgresql://" + normalized.removeprefix("postgres://")
+    if normalized.startswith("postgresql+psycopg2://"):
+        return "postgresql+psycopg://" + normalized.removeprefix("postgresql+psycopg2://")
+    if normalized.startswith("postgresql://"):
+        return "postgresql+psycopg://" + normalized.removeprefix("postgresql://")
+    return normalized
+
+
 if settings.DATABASE_URL:
     engine = create_async_engine(
-        settings.DATABASE_URL,
+        _async_database_url(settings.DATABASE_URL),
         echo=settings.APP_DEBUG,
         pool_pre_ping=True,
         pool_size=5,
@@ -85,7 +98,7 @@ async def init_db() -> bool:
     if engine is None:
         return False
 
-    # Importação tardia evita ciclo entre `database` e `models.candle`.
+    # Importação tardia evita ciclo entre database e models.candle.
     from models.candle import Candle  # noqa: F401
 
     async def create_tables() -> None:

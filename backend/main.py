@@ -10,12 +10,16 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from api.routes.gmail_auth import router as gmail_auth_router
+from api.routes.alert_status import router as alert_status_router
 from api.routes.market import router as market_router
+from api.routes.notifications import router as notifications_router
 from api.routes.prediction import router as prediction_router
 from config import settings
 from database import check_database, dispose_db, init_db
 from schemas.candle import HealthResponse
 from services.binance_stream import binance_stream_service
+from services.notifications.telegram_service import get_telegram_service
 from services.ws_manager import connection_manager, on_binance_tick
 
 logging.basicConfig(
@@ -31,6 +35,7 @@ async def lifespan(app: FastAPI):
     database_ready = await init_db()
     if not database_ready:
         logger.warning("Banco indisponível ou não configurado durante o startup")
+    logger.info("Telegram configured: %s", get_telegram_service().is_configured())
 
     binance_stream_service.subscribe(on_binance_tick)
     binance_stream_service.start()
@@ -68,6 +73,9 @@ app.include_router(prediction_router, prefix=settings.API_V1_PREFIX)
 # Alias sem prefixo de versão para compatibilidade direta com o spec original.
 app.include_router(market_router)
 app.include_router(prediction_router)
+app.include_router(gmail_auth_router, prefix="/auth")
+app.include_router(notifications_router)
+app.include_router(alert_status_router)
 
 
 @app.get("/health", response_model=HealthResponse)

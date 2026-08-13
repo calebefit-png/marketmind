@@ -15,7 +15,7 @@ Plataforma de inteligência financeira com IA: monitoramento em tempo real de cr
 3. **Build Command:** `pip install -r requirements.txt`
 4. **Start Command:** `uvicorn main:app --host 0.0.0.0 --port $PORT`
 5. Variáveis de ambiente obrigatórias (Render → Environment): `DATABASE_URL`, `DATABASE_URL_SYNC`, `REDIS_URL`, `CORS_ORIGINS` (URL do frontend no Netlify), `APP_ENV=production`, `APP_DEBUG=false`.
-6. O repositório inclui `render.yaml` na raiz: se preferir, use "New Blueprint Instance" no Render apontando para o repo e ele já configura Root Directory, build e start automaticamente.
+6. Configure o Web Service manualmente com os campos acima. Um processo de alertas deve ser criado separadamente conforme a seção de alertas abaixo.
 7. O app agora sobe mesmo sem banco disponível no primeiro deploy (falha de conexão ao Postgres é logada, não derruba o processo); rotas que dependem de banco retornarão erro até `DATABASE_URL` estar correto.
 
 ### Frontend no Netlify
@@ -156,6 +156,128 @@ Todas as rotas também respondem sob o prefixo `/api/v1` (ex.: `/api/v1/market/b
 
 ---
 
+## Alertas por Gmail API com OAuth 2.0
+
+O backend utiliza exclusivamente a **Gmail API oficial** com OAuth 2.0 e o escopo mínimo `https://www.googleapis.com/auth/gmail.send`. Não há SMTP, senha Gmail, App Password, Service Account nem integração funcional com Resend. O refresh token permanece somente nas variáveis de ambiente do Render e é renovado pela biblioteca oficial do Google.[1] [2]
+
+| Variável | Finalidade |
+| --- | --- |
+| `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET` | Credenciais de um cliente OAuth Web criado no Google Cloud |
+| `GOOGLE_REFRESH_TOKEN` | Autorização persistente para enviar em nome da conta Gmail; nunca versionar |
+| `GMAIL_SENDER_EMAIL` | Conta Google que autorizou o envio de alertas |
+| `GMAIL_ADMIN_SECRET` | Protege o início do OAuth, o `state` assinado e o envio administrativo de teste |
+| `GMAIL_OAUTH_REDIRECT_URI` | URI de callback registrada no Google Cloud Console |
+| `GMAIL_STATE_MAX_AGE_SECONDS` | Validade do `state` HMAC do OAuth, com padrão de 600 segundos |
+
+### Google Cloud Console
+
+No [Google Cloud Console](https://console.cloud.google.com/), crie ou selecione um projeto dedicado ao MarketMind. Abra **APIs e serviços → Biblioteca**, procure por **Gmail API** e clique em **Ativar**. Em **APIs e serviços → Tela de consentimento OAuth**, escolha o tipo de público apropriado. Para uma conta pessoal em teste, escolha **Externo**, preencha os campos obrigatórios e inclua a conta remetente em **Test users**.
+
+Em **Escopos**, adicione somente `https://www.googleapis.com/auth/gmail.send`. Esse escopo permite enviar e-mails em nome da conta que consentiu a autorização.[2] Em **Credenciais → Criar credenciais → ID do cliente OAuth**, escolha **Aplicativo da Web** e cadastre esta URI de redirecionamento autorizada:
+
+```text
+https://marketmind-l3kg.onrender.com/auth/gmail/callback
+```
+
+Para desenvolvimento local, cadastre adicionalmente a URI local definida por `GMAIL_OAUTH_REDIRECT_URI`, por exemplo `http://localhost:8000/auth/gmail/callback`. Copie o Client ID e o Client secret, mas não os registre em repositórios, arquivos de exemplo ou canais de comunicação.
+
+### Render, autorização e teste
+
+No Render, em **Environment**, cadastre `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GMAIL_SENDER_EMAIL`, `GMAIL_ADMIN_SECRET` e `GMAIL_OAUTH_REDIRECT_URI=https://marketmind-l3kg.onrender.com/auth/gmail/callback`. Para o segredo administrativo, gere um valor aleatório longo com:
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(48))"
+```
+
+Inicialmente, deixe `GOOGLE_REFRESH_TOKEN` ausente. Após o deploy dessas variáveis, inicie o OAuth sem colocar o segredo na URL:
+
+```bash
+curl --silent --show-error --include \
+  --header "X-Gmail-Admin-Secret: SEU_GMAIL_ADMIN_SECRET" \
+  https://marketmind-l3kg.onrender.com/auth/gmail
+```
+
+Copie a URL do cabeçalho `location:` para o navegador, faça login na conta remetente e clique em **Permitir**. O callback revela o refresh token somente uma vez pela conexão HTTPS, com `Cache-Control: no-store`; copie-o imediatamente para `GOOGLE_REFRESH_TOKEN` no Render e faça novo deploy. O código não persiste esse token em arquivos, banco ou logs.
+
+Após o redeploy, valide uma entrega real pelo endpoint administrativo protegido:
+
+```bash
+curl --request POST https://marketmind-l3kg.onrender.com/auth/gmail/test \
+  --header "Content-Type: application/json" \
+  --header "X-Gmail-Admin-Secret: SEU_GMAIL_ADMIN_SECRET" \
+  --data '{"to":"seu-email-de-teste@example.com","subject":"Teste MarketMind","body":"A integração Gmail OAuth está ativa."}'
+```
+
+O serviço suporta texto, HTML, múltiplos destinatários, `Reply-To` e possui contrato para anexos. O endpoint de teste não devolve corpo nem destinatário na resposta. Mantenha `GMAIL_ADMIN_SECRET`, `GOOGLE_CLIENT_SECRET` e `GOOGLE_REFRESH_TOKEN` apenas no cofre de variáveis do Render.
+
+> Dois tokens pessoais do GitHub foram compartilhados durante o desenvolvimento. Por segurança, revogue-os imediatamente em [GitHub Settings → Developer settings → Personal access tokens](https://github.com/settings/tokens), mesmo que não estejam no repositório.
+
+Para verificar localmente, entre em `backend`, instale as dependências e execute `python -m unittest discover -s tests -v`.
+
+---
+
+## Alertas Telegram e worker de mercado
+
+O MarketMind possui um processo de alertas separado da API HTTP. Ele recebe ticks verificáveis de `BTCUSDT` via Binance, consulta candles diários já persistidos para calcular RSI, MACD, rompimentos e volume relativo, e verifica a série Selic já integrada ao BCB. A primeira entrega **não inventa** notícias, fluxo de baleias, Smart Money, dados B3, pesquisas BTG ou macro internacional: esses tópicos aguardam conectores de dados verificáveis.
+
+| Categoria | Critério inicial | Deduplicação e entrega |
+| --- | --- | --- |
+| Preço | Movimento de ao menos `2,5%` em até 15 minutos, configurável. | Cooldown persistente padrão de 30 minutos por perfil, ativo e regra. |
+| Técnica | RSI extremo, cruzamento MACD, rompimento diário de faixa de 20 candles e volume acima da média. | O texto informa hipótese, fonte e condição de invalidação; não recomenda comprar ou vender. |
+| Macro Brasil | Mudança material na série Selic monitorada. | Cooldown de 24 horas para a mesma regra. |
+| IA preditiva | Desabilitada enquanto o modelo estiver em `model_not_reliable`. | Nenhuma previsão não validada é enviada como alerta. |
+
+### Criar e configurar o bot Telegram
+
+Abra [@BotFather](https://t.me/BotFather), envie `/newbot`, defina o nome e o identificador do bot e guarde o token retornado somente no cofre de variáveis do Render. Em seguida, abra a conversa com o bot e envie `/start`. Para obter o identificador de conversa, defina temporariamente o token no seu terminal local e execute:
+
+```bash
+export TELEGRAM_BOT_TOKEN='token-fornecido-pelo-botfather'
+curl --silent "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates"
+```
+
+Localize o campo `message.chat.id` na resposta. Em grupos, adicione o bot e envie uma mensagem de teste antes de consultar `getUpdates`. Não compartilhe o token ou a resposta integral em chats, logs ou repositórios. A Bot API usa HTTPS e devolve um objeto JSON com o campo `ok`; o provedor interno aplica timeout, retentativas limitadas, leitura de `retry_after`, fragmentação e um intervalo conservador por conversa.[3] [4]
+
+No Render, cadastre `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `ADMIN_NOTIFICATION_SECRET` e `ALERT_DEFAULT_CHANNELS=telegram`. O Telegram é o único canal ativo do radar. As preferências de ativo, canal, severidade mínima, cooldown e pausa ficam no PostgreSQL; tokens, chat IDs e endereços de entrega nunca são persistidos nesse histórico.
+
+O endpoint de teste é administrativo e não aparece no Swagger:
+
+```bash
+curl --request POST https://marketmind-l3kg.onrender.com/notifications/test/telegram \
+  --header "Content-Type: application/json" \
+  --header "X-Admin-Notification-Secret: SEU_ADMIN_NOTIFICATION_SECRET" \
+  --data '{"message":"<b>MarketMind</b> — teste de Telegram."}'
+```
+
+### Criar o processo contínuo no Render
+
+No mesmo repositório e com o mesmo `Root Directory` (`backend`), crie em **New → Background Worker** um serviço separado. Use `pip install -r requirements.txt` como **Build Command** e `python -m services.alerts.alert_worker` como **Start Command**. O `runtime.txt` fixa **Python 3.12**. Copie `DATABASE_URL`, as variáveis Binance/BCB, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `ADMIN_NOTIFICATION_SECRET` e as variáveis `ALERT_*` para esse Worker. O worker deve permanecer em uma única réplica; a deduplicação, o cooldown e o heartbeat permanecem no PostgreSQL após reinicializações.
+
+As preferências do perfil administrativo inicial podem ser consultadas ou atualizadas apenas com o segredo administrativo:
+
+```bash
+curl --request PUT https://marketmind-l3kg.onrender.com/notifications/preferences/owner \
+  --header "Content-Type: application/json" \
+  --header "X-Admin-Notification-Secret: SEU_ADMIN_NOTIFICATION_SECRET" \
+  --data '{"assets":["BTCUSDT","SELIC"],"channels":["telegram"],"minimum_severity":"WARNING","cooldown_seconds":1800,"paused":false}'
+```
+
+O contrato operacional completo de fontes e limites está em [`docs/alert_event_coverage.md`](docs/alert_event_coverage.md). Para a API oficial do Telegram, mantenha como limite conservador no máximo uma mensagem por segundo por conversa; excedê-lo pode resultar em `429`.[4]
+
+As rotas públicas `GET /alerts/status` e `GET /alerts/recent` exibem, respectivamente, o heartbeat sem segredos, a configuração do Telegram, a condição de confiabilidade do modelo e o histórico de alertas. O catálogo expõe Binance e BCB como fontes disponíveis; B3, BTG Research, News e Whales retornam explicitamente `not_available` até que conectores verificáveis sejam integrados.
+
+## Referências
+
+[1] [Gmail API — Sending Email](https://developers.google.com/gmail/api/guides/sending)
+
+[2] [Gmail API — OAuth 2.0 Scopes](https://developers.google.com/gmail/api/auth/scopes)
+
+[3] [Telegram Bot API — Requests and responses](https://core.telegram.org/bots/api)
+
+[4] [Telegram Bots FAQ — Broadcasting limits](https://core.telegram.org/bots/faq)
+
+---
+
 ## Fase 2 — Motor preditivo (IA estatística real)
 
 Diferente do `trend_engine.py` (regras heurísticas fixas), o motor abaixo **aprende** com histórico via `GradientBoostingClassifier` e é validado com **walk-forward** (janelas anuais expansivas, nunca embaralhadas).
@@ -250,7 +372,7 @@ Deliberadamente **fora** de escopo nesta fase (complexidade desnecessária antes
 
 1. **Ações B3 em tempo real** — integração com provedor de cotações B3 (ex.: Alpha Vantage, Brapi, ou feed direto) para PETR4, VALE3, ITUB4 etc.
 2. **IFIX e FIIs** — monitoramento do índice IFIX e principais fundos imobiliários.
-3. **Alertas Telegram/WhatsApp** — notificações automáticas de mudança de tendência e cruzamento de indicadores.
+3. **WhatsApp e conectores de fontes adicionais** — canal complementar, B3 em tempo real, notícias, whale activity e outros eventos somente após integração de fontes verificáveis.
 4. **Backtesting** — motor de simulação histórica das estratégias de tendência sobre dados armazenados no TimescaleDB.
 5. **LSTM/Transformer** — modelos de séries temporais para previsão probabilística de curto prazo, substituindo/complementando o motor de regras atual.
 6. **Sentimento de notícias** — pipeline de NLP sobre notícias financeiras para score de sentimento por ativo.

@@ -37,6 +37,20 @@ export function Dashboard() {
     staleTime: Infinity,
   });
 
+  const { data: alertStatus } = useQuery({
+    queryKey: ["alert-status"],
+    queryFn: api.alertStatus,
+    refetchInterval: 30_000,
+    retry: 1,
+  });
+
+  const { data: recentAlerts } = useQuery({
+    queryKey: ["recent-alerts"],
+    queryFn: api.recentAlerts,
+    refetchInterval: 30_000,
+    retry: 1,
+  });
+
   useEffect(() => {
     const disconnect = connectMarketSocket(
       (tick) => {
@@ -142,6 +156,29 @@ export function Dashboard() {
             <IndicatorTile label="MACD" value={analysis.indicators.macd} />
           </section>
         )}
+
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="rounded-sm border border-terminal-border bg-terminal-panel p-4">
+            <h2 className="font-mono text-sm font-semibold text-terminal-text uppercase tracking-wide">Radar operacional</h2>
+            <div className="mt-3 space-y-2 text-xs font-mono text-terminal-muted">
+              <p>Worker: <span className="text-terminal-text">{alertStatus?.worker.status ?? "indisponível"}</span></p>
+              <p>Telegram: <span className="text-terminal-text">{alertStatus?.telegram_configured ? "configurado" : "pendente"}</span></p>
+              <p>Modelo BTC: <span className="text-terminal-text">{alertStatus?.model.reliable ? "confiável" : "não confiável / indisponível"}</span></p>
+              <p>Eventos: <span className="text-terminal-text">{alertStatus?.worker.processed_events ?? 0}</span> · Alertas enviados: <span className="text-terminal-text">{alertStatus?.worker.sent_alerts ?? 0}</span></p>
+            </div>
+          </div>
+          <div className="lg:col-span-2 rounded-sm border border-terminal-border bg-terminal-panel p-4">
+            <h2 className="font-mono text-sm font-semibold text-terminal-text uppercase tracking-wide">Alertas recentes</h2>
+            <div className="mt-3 space-y-2">
+              {recentAlerts?.length ? recentAlerts.slice(0, 4).map((alert) => (
+                <div key={alert.id} className="border-l-2 border-accent pl-3 text-xs">
+                  <p className="font-mono text-terminal-text">{alert.asset} · {alert.title}</p>
+                  <p className="text-terminal-muted line-clamp-1">{alert.message}</p>
+                </div>
+              )) : <p className="text-xs font-mono text-terminal-muted">Nenhum alerta persistido ainda.</p>}
+            </div>
+          </div>
+        </section>
 
         <p className="text-xs text-terminal-muted font-mono text-center pt-4">
           MarketMind AI trabalha com probabilidades e cenários — não constitui recomendação de investimento.

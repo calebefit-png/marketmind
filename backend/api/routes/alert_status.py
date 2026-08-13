@@ -1,0 +1,64 @@
+"""Leituras públicas, sem segredos, para o radar operacional de alertas."""
+
+from __future__ import annotations
+
+from fastapi import APIRouter
+from sqlalchemy import select
+
+from database import AsyncSessionLocal
+from models.alert import AlertEvent
+from services.alerts.worker_status import WorkerStatusService
+from services.data_providers import provider_registry
+from services.model_registry import model_registry
+from services.notifications.telegram_service import get_telegram_service
+
+router = APIRouter(tags=["alerts"])
+
+
+@router.get("/alerts/status")
+async def get_alert_status() -> dict[str, object]:
+    heartbeat = await WorkerStatusService().snapshot()
+    model = model_registry.load("BTCUSDT")
+    return {
+        "telegram_configured": get_telegram_service().is_configured(),
+        "worker": {
+            "status": heartbeat.status if heartbeat else "offline",
+            "last_run": heartbeat.last_run.isoformat() if heartbeat and heartbeat.last_run else None,
+            "last_success": heartbeat.last_success.isoformat() if heartbeat and heartbeat.last_success else None,
+            "processed_events": heartbeat.processed_events if heartbeat else 0,
+            "sent_alerts": heartbeat.sent_alerts if heartbeat else 0,
+            "last_error": heartbeat.last_error if heartbeat else None,
+        },
+        "model": {
+            "asset": "BTCUSDT",
+            "available": model is not None,
+            "reliable": bool(model and model.metrics.get("reliable", False)),
+            "name": model.metadata.get("model_name") if model else None,
+        },
+        "providers": [status.__dict__ for status in await provider_registry.statuses()],
+    }
+
+
+@router.get("/alerts/recent")
+async def get_recent_alerts(limit: int = 10) -> list[dict[str, object]]:
+    if AsyncSessionLocal is None:
+        return []
+    safe_limit = min(max(limit, 1), 50)
+    async with AsyncSessionLocal() as session:
+        result = await session.scalars(
+            select(AlertEvent).order_by(AlertEvent.created_at.desc()).limit(safe_limit)
+        )
+        return [
+            {
+                "id": event.id,
+                "asset": event.asset,
+                "event_type": event.event_type,
+                "severity": event.severity,
+                "title": event.title,
+                "message": event.message,
+                "status": event.status,
+                "channel": event.channel,
+                "created_at": event.created_at.isoformat(),
+            }
+            for event in result.all()
+        ]

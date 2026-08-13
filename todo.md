@@ -1,0 +1,39 @@
+# Project TODO
+
+- [x] Inventariar referências a Resend, e-mail, variáveis de ambiente e rotas de autenticação no backend FastAPI.
+- [x] Confirmar a estrutura atual de configuração, segurança administrativa e persistência de tokens no projeto.
+- [x] Adicionar dependências oficiais do Google para OAuth 2.0 e Gmail API com o escopo mínimo `gmail.send`.
+- [x] Implementar `services/email/gmail_service.py` com envio de texto, HTML, múltiplos destinatários, reply-to e tratamento de erros.
+- [x] Implementar fluxo inicial OAuth Gmail com state assinado, validação administrativa, callback restrito e refresh token seguro.
+- [x] Implementar endpoint administrativo protegido para teste de envio de e-mail sem expor segredos ou destinatários no cliente.
+- [x] Remover qualquer dependência funcional de `RESEND_API_KEY` e validar ausência de chamadas ao Resend.
+- [x] Atualizar `.env.example`, `requirements.txt` e README com as variáveis e o procedimento completo no Google Cloud Console.
+- [x] Criar testes automatizados para configuração Gmail, criação de mensagens, erros de API e proteção das rotas administrativas.
+- [x] Executar testes, build/checagens do backend, auditoria de segredos e revisão de segurança.
+- [x] Commitar as alterações validadas no GitHub; o deploy e o teste real de Telegram dependem do provisionamento privado no Render.
+- [x] Definir a arquitetura de execução automática dos alertas e registrar a decisão operacional.
+- [ ] Provisionar no Render um processo dedicado e contínuo de alertas, isolado da API pública, com comando de inicialização documentado.
+- [x] Mapear os eventos de mercado já disponíveis e os dados adicionais necessários para alertas de notícias, macro, B3 e Smart Money.
+- [x] Criar contratos comuns de alerta, prioridade, canais, deduplicação, cooldown, agrupamento e histórico de entregas.
+- [ ] Implementar o provedor Telegram oficial com timeout, retry exponencial, rate limiting, mensagens longas e suporte Markdown/HTML.
+- [ ] Adicionar `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID` ao ambiente seguro e ao `.env.example` sem valores reais.
+- [x] Criar endpoint administrativo protegido `POST /notifications/test/telegram` e testes com API externa mockada.
+- [x] Integrar Gmail OAuth e Telegram em um serviço comum de distribuição por canais.
+- [x] Implementar o motor de relevância para alertas técnicos, probabilísticos, de oportunidade e risco sem linguagem de recomendação.
+- [x] Conectar os alertas aos eventos e às fontes de mercado atualmente suportadas pelo backend.
+- [x] Preparar persistência e preferências configuráveis de ativos, canais, frequência, janelas e severidade.
+- [x] Documentar criação do bot no BotFather, descoberta do chat ID, variáveis seguras, execução e limites operacionais.
+- [x] Executar validações completas de código e testes mockados; os testes reais e o commit final aguardam credenciais e provisionamento.
+- [x] Confirmar a aderência da implementação existente aos requisitos ampliados de worker, estado, ML, APIs e dashboard.
+- [x] Tornar Telegram o único canal ativo por padrão e adicionar uma verificação de startup sem expor token ou chat ID.
+- [x] Substituir a proteção administrativa de notificações por `ADMIN_NOTIFICATION_SECRET`, mantendo compatibilidade segura durante a transição.
+- [x] Fixar a compatibilidade do runtime em Python 3.12 e documentar as variáveis reais do Worker no Render.
+- [x] Persistir estado expandido de alertas com valor, valor anterior, hash de mensagem, canal, cooldown e recuperação após reinício.
+- [x] Criar heartbeat persistente do worker com última execução, sucesso, erro, eventos processados e alertas enviados.
+- [x] Expor status administrativo do worker sem dados sensíveis.
+- [x] Introduzir fila interna de notificações para que o envio Telegram não bloqueie a coleta de mercado.
+- [x] Ampliar o Alert Engine com tendência, regime, contexto ML confiável e alertas somente para alterações probabilísticas verificáveis.
+- [x] Criar interfaces de `DataProvider` e adaptadores reais Binance/BCB, deixando B3, BTG, News e Whales como `NOT_AVAILABLE`.
+- [x] Integrar status de alertas, modelo e worker ao dashboard existente sem quebrar endpoints compatíveis.
+- [x] Criar e executar testes de worker, fila, persistência, deduplicação, cooldown, API, ML e WebSocket.
+- [x] Executar auditoria final de código, segurança e testes; o teste Telegram e o provisionamento do Worker dependem apenas das credenciais privadas no Render.

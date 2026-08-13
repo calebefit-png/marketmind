@@ -60,6 +60,17 @@ export interface Candle {
   volume: number;
 }
 
+export interface AlertStatus {
+  telegram_configured: boolean;
+  worker: { status: string; last_run: string | null; last_success: string | null; processed_events: number; sent_alerts: number; last_error: string | null };
+  model: { asset: string; available: boolean; reliable: boolean; name: string | null };
+  providers: Array<{ name: string; availability: string; detail: string }>;
+}
+
+export interface RecentAlert {
+  id: string; asset: string; event_type: string; severity: string; title: string; message: string; status: string; channel: string; created_at: string;
+}
+
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, {
     ...init,
@@ -90,6 +101,8 @@ export const api = {
   btcPrice: () => apiFetch<PriceTick>("/market/btc"),
   selic: () => apiFetch<SelicResponse>("/macro/selic"),
   btcAnalysis: () => apiFetch<AnalysisResponse>("/analysis/btc"),
+  alertStatus: () => apiFetch<AlertStatus>("/alerts/status"),
+  recentAlerts: () => apiFetch<RecentAlert[]>("/alerts/recent"),
 };
 
 export function connectMarketSocket(

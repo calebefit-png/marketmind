@@ -85,6 +85,15 @@ async def websocket_market(websocket: WebSocket) -> None:
     """Canal WebSocket para ticks de preço no formato `{type, data}`."""
     await connection_manager.connect(websocket)
     try:
+        initial_tick = binance_stream_service.last_tick
+        if initial_tick is None:
+            try:
+                initial_tick = await binance_stream_service.fetch_rest_tick()
+            except Exception as exc:
+                logger.warning("Não foi possível enviar tick inicial ao cliente WS: %s", type(exc).__name__)
+        if initial_tick is not None:
+            await websocket.send_json({"type": "price_tick", "data": initial_tick})
+
         while True:
             # Mantém a conexão viva; o cliente pode enviar pings/texto, ignoramos o conteúdo.
             await websocket.receive_text()

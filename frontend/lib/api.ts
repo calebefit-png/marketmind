@@ -4,7 +4,9 @@
  * definição do endpoint WebSocket para streaming de preços em tempo real.
  */
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+export const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ??
+  (typeof window !== "undefined" ? window.location.origin : "http://localhost:8000");
 
 // WS_URL é sempre derivado de API_URL (https->wss, http->ws) para evitar
 // desalinhamento em produção quando apenas NEXT_PUBLIC_API_URL é configurado.

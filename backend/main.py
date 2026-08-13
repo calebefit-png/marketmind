@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from api.routes.market import router as market_router
 from api.routes.prediction import router as prediction_router
@@ -99,3 +101,12 @@ async def websocket_market(websocket: WebSocket) -> None:
             await websocket.receive_text()
     except WebSocketDisconnect:
         connection_manager.disconnect(websocket)
+
+
+# O painel Next.js é exportado estaticamente para este diretório no release.
+# O mount é registrado por último para preservar todas as rotas HTTP e WebSocket.
+frontend_dir = Path(__file__).resolve().parent / "static"
+if frontend_dir.is_dir():
+    app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
+else:
+    logger.warning("Frontend estático não encontrado em %s; servindo apenas a API", frontend_dir)

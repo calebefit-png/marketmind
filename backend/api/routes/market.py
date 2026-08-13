@@ -14,7 +14,6 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from config import settings
 from database import get_db
 from models.candle import Candle
 from schemas.candle import AnalysisResponse, PriceTick, SelicResponse
@@ -38,26 +37,21 @@ async def get_btc_price() -> PriceTick:
 
     if price is None:
         try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                response = await client.get(
-                    f"{settings.BINANCE_REST_URL}/ticker/price",
-                    params={"symbol": "BTCUSDT"},
-                )
-                response.raise_for_status()
-                data = response.json()
-                price = float(data["price"])
-        except (httpx.HTTPError, KeyError, TypeError, ValueError) as exc:
-            logger.warning("Binance REST indisponível: %s", type(exc).__name__)
+            tick = await binance_stream_service.fetch_rest_tick()
+            price = float(tick["price"])
+        except RuntimeError as exc:
+            logger.warning("Fallback REST da Binance indisponível: %s", exc)
             raise HTTPException(
                 status_code=503,
                 detail="Cotação BTC indisponível no momento.",
             ) from exc
 
+    last_tick = binance_stream_service.last_tick or {}
     return PriceTick(
         asset="BTCUSDT",
         price=price,
         timestamp=datetime.now(tz=timezone.utc),
-        source="binance",
+        source=last_tick.get("source", "binance"),
     )
 
 

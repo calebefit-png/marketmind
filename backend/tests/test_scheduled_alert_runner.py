@@ -1,9 +1,11 @@
 import asyncio
+from types import SimpleNamespace
 import unittest
 from unittest.mock import AsyncMock, patch
 
 from services.alerts.alert_worker import AlertWorker
 from services.alerts.scheduled_runner import main
+from services.alerts.worker_status import WorkerStatusService
 
 
 class ScheduledAlertRunnerTestCase(unittest.IsolatedAsyncioTestCase):
@@ -34,3 +36,33 @@ class ScheduledAlertRunnerTestCase(unittest.IsolatedAsyncioTestCase):
             await main()
 
         mocked_run_once.assert_awaited_once_with()
+
+    async def test_heartbeat_normalizes_legacy_null_counters(self):
+        record = SimpleNamespace(
+            processed_events=None,
+            sent_alerts=None,
+            last_run=None,
+            status=None,
+            last_success=None,
+        )
+
+        class Session:
+            async def get(self, *_args):
+                return record
+
+            async def commit(self):
+                return None
+
+        class SessionContext:
+            async def __aenter__(self):
+                return Session()
+
+            async def __aexit__(self, *_args):
+                return None
+
+        with patch("services.alerts.worker_status.AsyncSessionLocal", return_value=SessionContext()):
+            await WorkerStatusService().heartbeat(processed_increment=3, sent_increment=2)
+
+        self.assertEqual(record.processed_events, 3)
+        self.assertEqual(record.sent_alerts, 2)
+        self.assertEqual(record.status, "online")

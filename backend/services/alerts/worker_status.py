@@ -30,8 +30,10 @@ class WorkerStatusService:
                 record = WorkerHeartbeat(worker_name=self.worker_name)
                 session.add(record)
             record.last_run = now
-            record.processed_events += max(processed_increment, 0)
-            record.sent_alerts += max(sent_increment, 0)
+            # Registros criados antes da migração podem ter contadores nulos.
+            # Normalizamos para zero antes de acumular o ciclo atual.
+            record.processed_events = int(record.processed_events or 0) + max(processed_increment, 0)
+            record.sent_alerts = int(record.sent_alerts or 0) + max(sent_increment, 0)
             if error is None:
                 record.status = "online"
                 record.last_success = now

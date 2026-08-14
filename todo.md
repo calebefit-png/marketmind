@@ -46,3 +46,6 @@
 - [x] Confirmar que o Web Service gratuito continua atendendo a API e o frontend após a tentativa de alteração; `GET /health` permaneceu em `200`.
 - [x] Adaptar o processamento de alertas para uma execução agendada, sem provisionar Background Worker pago no Render.
 - [x] Documentar as limitações de latência, a franquia de execução e os segredos necessários para a execução agendada sem expor valores privados.
+- [x] Restaurar a disponibilidade das rotas públicas de alertas reativando o banco PostgreSQL gratuito correto; `GET /alerts/status`, `GET /alerts/recent` e `GET /alerts/preferences` voltaram a responder `200`.
+- [x] Diagnosticar por que a primeira execução manual do workflow agendado não registrava heartbeat; a URL externa conectou ao banco e expôs contadores legados nulos.
+- [x] Corrigir o incremento de heartbeat quando registros antigos possuem `processed_events` nulo e validar o fluxo com 27 testes automatizados aprovados.

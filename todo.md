@@ -41,3 +41,5 @@
 - [x] Atualizar testes e documentação para a central de alertas e os controles globais.
 - [x] Criar e executar testes de worker, fila, persistência, deduplicação, cooldown, API, ML e WebSocket.
 - [x] Executar auditoria final de código, segurança e testes; o teste Telegram e o provisionamento do Worker dependem apenas das credenciais privadas no Render.
+- [x] Confirmar que o histórico público canônico é `GET /alerts/recent`; a rota respondeu `200` em produção e é a utilizada pela central `/alerts`.
+- [x] Corrigir a resposta `500` de `GET /alerts/preferences` e validar a leitura pública, não sensível, dos controles globais com cobertura automatizada.

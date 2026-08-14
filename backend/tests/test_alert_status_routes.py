@@ -1,8 +1,11 @@
 import unittest
+from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
 
 from main import app
+from services.notifications.contracts import AlertSeverity, NotificationChannel
+from services.notifications.preferences import PreferenceSnapshot
 
 
 class AlertStatusRoutesTestCase(unittest.TestCase):
@@ -33,3 +36,35 @@ class AlertStatusRoutesTestCase(unittest.TestCase):
             )
         self.assertEqual(response.status_code, 200)
         self.assertIsInstance(response.json(), list)
+
+    @patch(
+        "api.routes.alert_status.AlertPreferenceService.get_or_create_owner",
+        new_callable=AsyncMock,
+    )
+    def test_global_preferences_return_only_non_sensitive_fields(self, mocked_preference):
+        mocked_preference.return_value = PreferenceSnapshot(
+            scope_key="owner",
+            assets=("BTCUSDT", "SELIC"),
+            channels=(NotificationChannel.TELEGRAM,),
+            minimum_severity=AlertSeverity.INFO,
+            cooldown_seconds=3600,
+            paused=False,
+        )
+
+        with TestClient(app) as client:
+            response = client.get("/alerts/preferences")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json(),
+            {
+                "scope_key": "owner",
+                "assets": ["BTCUSDT", "SELIC"],
+                "channels": ["telegram"],
+                "minimum_severity": "INFO",
+                "cooldown_seconds": 3600,
+                "paused": False,
+                "managed_via": "ADMIN_NOTIFICATION_SECRET",
+            },
+        )
+        mocked_preference.assert_awaited_once_with()

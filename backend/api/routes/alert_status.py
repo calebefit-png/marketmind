@@ -89,7 +89,7 @@ async def get_recent_alerts(
 @router.get("/alerts/preferences")
 async def get_global_alert_preferences() -> dict[str, object]:
     """Retorna somente a configuração global não sensível consumida pelo dashboard."""
-    preference = await AlertPreferenceService().get("owner")
+    preference = await AlertPreferenceService().get_or_create_owner()
     return {
         "scope_key": preference.scope_key,
         "assets": preference.assets,

@@ -266,6 +266,20 @@ O contrato operacional completo de fontes e limites está em [`docs/alert_event_
 
 As rotas públicas `GET /alerts/status` e `GET /alerts/recent` exibem, respectivamente, o heartbeat sem segredos, a configuração do Telegram, a condição de confiabilidade do modelo e o histórico de alertas. O catálogo expõe Binance e BCB como fontes disponíveis; B3, BTG Research, News e Whales retornam explicitamente `not_available` até que conectores verificáveis sejam integrados.
 
+### Central de alertas e filtros
+
+A página `https://SEU_FRONTEND/alerts` concentra o histórico operacional do radar. Ela permite filtrar alertas por ativo, severidade, canal Telegram, status de entrega e intervalo de datas; o histórico é atualizado a cada 30 segundos e apresenta somente eventos persistidos pelo worker.
+
+| Parâmetro público de `GET /alerts/recent` | Exemplo | Uso |
+| --- | --- | --- |
+| `asset` | `BTCUSDT` | Limita o histórico a um ativo monitorado. |
+| `severity` | `WARNING` | Filtra por `INFO`, `WARNING` ou `CRITICAL`. |
+| `channel` | `telegram` | Filtra pelo canal de entrega. |
+| `status` | `sent` | Filtra por estado operacional do evento. |
+| `date_from` e `date_to` | `2026-08-14T00:00:00Z` | Delimitam o período do histórico. |
+
+Os controles globais mostrados na página — ativos, severidade mínima, cooldown e pausa — são somente leitura no navegador. A alteração permanece protegida pela API administrativa com `ADMIN_NOTIFICATION_SECRET`, evitando que esse segredo seja distribuído para o cliente. Nesta entrega, **Telegram é o único canal operacional**; o código de Gmail OAuth permanece isolado para uso futuro e não é exigido para iniciar, testar ou operar o Worker.
+
 ## Referências
 
 [1] [Gmail API — Sending Email](https://developers.google.com/gmail/api/guides/sending)

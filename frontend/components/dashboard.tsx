@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import clsx from "clsx";
+import Link from "next/link";
 import { api, connectMarketSocket } from "@/lib/api";
 import { useMarketStore } from "@/lib/store";
 import { PriceCard } from "@/components/price-card";
@@ -46,7 +47,7 @@ export function Dashboard() {
 
   const { data: recentAlerts } = useQuery({
     queryKey: ["recent-alerts"],
-    queryFn: api.recentAlerts,
+    queryFn: () => api.recentAlerts(),
     refetchInterval: 30_000,
     retry: 1,
   });
@@ -90,7 +91,8 @@ export function Dashboard() {
             </h1>
             <span className="text-xs text-terminal-muted font-mono">AI TERMINAL</span>
           </div>
-          <div className="flex items-center gap-2 font-mono text-xs">
+          <div className="flex items-center gap-3 font-mono text-xs">
+            <Link href="/alerts" className="text-accent hover:underline">central de alertas</Link>
             <span
               className={clsx(
                 "h-1.5 w-1.5 rounded-full",

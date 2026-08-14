@@ -35,5 +35,9 @@
 - [x] Ampliar o Alert Engine com tendência, regime, contexto ML confiável e alertas somente para alterações probabilísticas verificáveis.
 - [x] Criar interfaces de `DataProvider` e adaptadores reais Binance/BCB, deixando B3, BTG, News e Whales como `NOT_AVAILABLE`.
 - [x] Integrar status de alertas, modelo e worker ao dashboard existente sem quebrar endpoints compatíveis.
+- [x] Criar a rota `/alerts` no frontend com histórico de alertas, filtros de severidade, ativo, data, canal e status.
+- [x] Expor filtros equivalentes na API de histórico sem alterar a compatibilidade do endpoint atual.
+- [x] Incluir controles globais de ativos, severidade mínima, cooldown e pausa sem introduzir configurações individuais de usuário ainda.
+- [x] Atualizar testes e documentação para a central de alertas e os controles globais.
 - [x] Criar e executar testes de worker, fila, persistência, deduplicação, cooldown, API, ML e WebSocket.
 - [x] Executar auditoria final de código, segurança e testes; o teste Telegram e o provisionamento do Worker dependem apenas das credenciais privadas no Render.

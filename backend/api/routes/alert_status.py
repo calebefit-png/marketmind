@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from fastapi import APIRouter
 from sqlalchemy import select
 
@@ -10,6 +12,7 @@ from models.alert import AlertEvent
 from services.alerts.worker_status import WorkerStatusService
 from services.data_providers import provider_registry
 from services.model_registry import model_registry
+from services.notifications.preferences import AlertPreferenceService
 from services.notifications.telegram_service import get_telegram_service
 
 router = APIRouter(tags=["alerts"])
@@ -40,14 +43,33 @@ async def get_alert_status() -> dict[str, object]:
 
 
 @router.get("/alerts/recent")
-async def get_recent_alerts(limit: int = 10) -> list[dict[str, object]]:
+async def get_recent_alerts(
+    limit: int = 10,
+    asset: str | None = None,
+    severity: str | None = None,
+    channel: str | None = None,
+    status: str | None = None,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+) -> list[dict[str, object]]:
     if AsyncSessionLocal is None:
         return []
     safe_limit = min(max(limit, 1), 50)
+    statement = select(AlertEvent).order_by(AlertEvent.created_at.desc()).limit(safe_limit)
+    if asset:
+        statement = statement.where(AlertEvent.asset == asset.strip().upper())
+    if severity:
+        statement = statement.where(AlertEvent.severity == severity.strip().upper())
+    if channel:
+        statement = statement.where(AlertEvent.channel == channel.strip().lower())
+    if status:
+        statement = statement.where(AlertEvent.status == status.strip().lower())
+    if date_from:
+        statement = statement.where(AlertEvent.created_at >= date_from)
+    if date_to:
+        statement = statement.where(AlertEvent.created_at <= date_to)
     async with AsyncSessionLocal() as session:
-        result = await session.scalars(
-            select(AlertEvent).order_by(AlertEvent.created_at.desc()).limit(safe_limit)
-        )
+        result = await session.scalars(statement)
         return [
             {
                 "id": event.id,
@@ -62,3 +84,18 @@ async def get_recent_alerts(limit: int = 10) -> list[dict[str, object]]:
             }
             for event in result.all()
         ]
+
+
+@router.get("/alerts/preferences")
+async def get_global_alert_preferences() -> dict[str, object]:
+    """Retorna somente a configuração global não sensível consumida pelo dashboard."""
+    preference = await AlertPreferenceService().get("owner")
+    return {
+        "scope_key": preference.scope_key,
+        "assets": preference.assets,
+        "channels": preference.channels,
+        "minimum_severity": preference.minimum_severity,
+        "cooldown_seconds": preference.cooldown_seconds,
+        "paused": preference.paused,
+        "managed_via": "ADMIN_NOTIFICATION_SECRET",
+    }

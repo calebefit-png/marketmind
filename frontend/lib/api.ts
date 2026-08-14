@@ -71,6 +71,26 @@ export interface RecentAlert {
   id: string; asset: string; event_type: string; severity: string; title: string; message: string; status: string; channel: string; created_at: string;
 }
 
+export interface AlertHistoryFilters {
+  asset?: string;
+  severity?: string;
+  channel?: string;
+  status?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  limit?: number;
+}
+
+export interface AlertPreferences {
+  scope_key: string;
+  assets: string[];
+  channels: string[];
+  minimum_severity: string;
+  cooldown_seconds: number;
+  paused: boolean;
+  managed_via: string;
+}
+
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, {
     ...init,
@@ -102,7 +122,18 @@ export const api = {
   selic: () => apiFetch<SelicResponse>("/macro/selic"),
   btcAnalysis: () => apiFetch<AnalysisResponse>("/analysis/btc"),
   alertStatus: () => apiFetch<AlertStatus>("/alerts/status"),
-  recentAlerts: () => apiFetch<RecentAlert[]>("/alerts/recent"),
+  recentAlerts: (filters: AlertHistoryFilters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.asset) params.set("asset", filters.asset);
+    if (filters.severity) params.set("severity", filters.severity);
+    if (filters.channel) params.set("channel", filters.channel);
+    if (filters.status) params.set("status", filters.status);
+    if (filters.dateFrom) params.set("date_from", new Date(`${filters.dateFrom}T00:00:00`).toISOString());
+    if (filters.dateTo) params.set("date_to", new Date(`${filters.dateTo}T23:59:59`).toISOString());
+    params.set("limit", String(filters.limit ?? 50));
+    return apiFetch<RecentAlert[]>(`/alerts/recent?${params.toString()}`);
+  },
+  alertPreferences: () => apiFetch<AlertPreferences>("/alerts/preferences"),
 };
 
 export function connectMarketSocket(

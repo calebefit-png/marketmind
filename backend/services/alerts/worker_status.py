@@ -50,6 +50,16 @@ class WorkerStatusService:
                 record.status = "offline"
                 await session.commit()
 
+    async def mark_scheduled(self) -> None:
+        """Marca uma execução pontual concluída, sem aparentar que existe processo residente."""
+        if AsyncSessionLocal is None:
+            return
+        async with AsyncSessionLocal() as session:
+            record = await session.get(WorkerHeartbeat, self.worker_name)
+            if record is not None:
+                record.status = "scheduled"
+                await session.commit()
+
     async def snapshot(self) -> WorkerHeartbeat | None:
         if AsyncSessionLocal is None:
             return None

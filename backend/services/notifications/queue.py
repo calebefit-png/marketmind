@@ -64,6 +64,10 @@ class NotificationQueue:
         await self._task
         self._task = None
 
+    async def wait_until_idle(self) -> None:
+        """Espera a entrega de todos os alertas antes de encerrar um ciclo agendado."""
+        await self._queue.join()
+
     async def _consume(self) -> None:
         while True:
             job = await self._queue.get()

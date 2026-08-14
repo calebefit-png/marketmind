@@ -80,6 +80,26 @@ class AlertWorker:
             await dispose_db()
             logger.info("Worker de alertas encerrado")
 
+    async def run_once(self) -> None:
+        """Executa uma varredura completa e encerra, apropriada para agendamentos pontuais."""
+        database_ready = await init_db()
+        if not database_ready:
+            raise RuntimeError("A execução agendada exige DATABASE_URL disponível.")
+        if not self._channels:
+            logger.warning("Nenhum canal de alerta reconhecido em ALERT_DEFAULT_CHANNELS.")
+        logger.info("Execução agendada iniciada; Telegram configured: %s", get_telegram_service().is_configured())
+        await self._status.heartbeat()
+        await self._queue.start()
+        try:
+            await self._run_cycle(self._evaluate_technical)
+            await self._run_cycle(self._evaluate_macro)
+            await self._queue.wait_until_idle()
+        finally:
+            await self._queue.stop()
+            await self._status.mark_scheduled()
+            await dispose_db()
+            logger.info("Execução agendada de alertas concluída")
+
     async def stop(self) -> None:
         self._stop_event.set()
 

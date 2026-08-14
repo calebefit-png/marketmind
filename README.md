@@ -249,7 +249,17 @@ curl --request POST https://marketmind-l3kg.onrender.com/notifications/test/tele
   --data '{"message":"<b>MarketMind</b> — teste de Telegram."}'
 ```
 
-### Criar o processo contínuo no Render
+### Operação sem serviço adicional no Render
+
+Para manter a operação sem contratar um Background Worker no Render, o repositório inclui o workflow `.github/workflows/market-alert-sweep.yml`. Ele inicia uma varredura única a cada três horas e também pode ser executado manualmente em **Actions → Market alert sweep → Run workflow**. A varredura consulta os dados verificáveis disponíveis, processa os sinais técnicos e macroeconômicos, espera a fila Telegram terminar e grava o estado `scheduled` no heartbeat antes de encerrar.
+
+No GitHub, em **Settings → Secrets and variables → Actions**, crie somente estes segredos de repositório: `DATABASE_URL`, `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID`. Copie os mesmos valores já mantidos de forma privada no Render; não os escreva no workflow, no código, em commits ou em mensagens. O workflow não requer `ADMIN_NOTIFICATION_SECRET` porque não invoca as rotas administrativas.
+
+> O agendamento é uma alternativa de menor custo, não um processo em tempo real. Ele pode detectar e enviar um alerta somente na próxima varredura e depende da disponibilidade do GitHub Actions e da franquia de execução da conta. Repositórios públicos têm execução padrão gratuita; em contas GitHub Free com repositórios privados há 2.000 minutos mensais incluídos e, sem método de pagamento, a execução é bloqueada ao atingir a franquia.[5]
+
+O **Start Command** do Web Service gratuito deve permanecer `uvicorn main:app --host 0.0.0.0 --port $PORT`. Nunca substitua esse comando por `python -m services.alerts.alert_worker`, pois isso interrompe a API HTTP e o frontend.
+
+### Processo contínuo pago no Render (opcional)
 
 No mesmo repositório e com o mesmo `Root Directory` (`backend`), crie em **New → Background Worker** um serviço separado. Use `pip install -r requirements.txt` como **Build Command** e `python -m services.alerts.alert_worker` como **Start Command**. O `runtime.txt` fixa **Python 3.12**. Copie `DATABASE_URL`, as variáveis Binance/BCB, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `ADMIN_NOTIFICATION_SECRET` e as variáveis `ALERT_*` para esse Worker. O worker deve permanecer em uma única réplica; a deduplicação, o cooldown e o heartbeat permanecem no PostgreSQL após reinicializações.
 
@@ -289,6 +299,8 @@ Os controles globais mostrados na página — ativos, severidade mínima, cooldo
 [3] [Telegram Bot API — Requests and responses](https://core.telegram.org/bots/api)
 
 [4] [Telegram Bots FAQ — Broadcasting limits](https://core.telegram.org/bots/faq)
+
+[5] [GitHub Actions — cobrança e franquias incluídas](https://docs.github.com/billing/managing-billing-for-github-actions/about-billing-for-github-actions)
 
 ---
 

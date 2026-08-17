@@ -6,12 +6,15 @@
 
 :root {
   color-scheme: dark;
+  --portal-canvas: #07111d;
+  --portal-ink: #e8eef7;
+  --portal-line: #1e2b3c;
 }
 
 html,
 body {
-  background-color: #0a0e12;
-  color: #c8d3dc;
+  background-color: var(--portal-canvas);
+  color: var(--portal-ink);
 }
 
 * {
@@ -27,13 +30,29 @@ body {
   font-feature-settings: "tnum" 1;
 }
 
+.bg-portal-canvas {
+  background-color: var(--portal-canvas);
+  background-image:
+    radial-gradient(circle at 10% -10%, rgba(34, 211, 238, 0.09), transparent 24rem),
+    radial-gradient(circle at 95% 5%, rgba(59, 130, 246, 0.07), transparent 20rem);
+}
+
+.text-portal-ink { color: var(--portal-ink); }
+.border-portal-line { border-color: var(--portal-line); }
+
+.ticker-mask {
+  scrollbar-width: none;
+}
+
+.ticker-mask::-webkit-scrollbar { display: none; }
+
 /* Scrollbar discreta, estilo terminal */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #0a0e12;
+  background: #07111d;
 }
 ::-webkit-scrollbar-thumb {
   background: #1e2833;

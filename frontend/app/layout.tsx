@@ -3,9 +3,9 @@ import "./globals.css";
 import { QueryProvider } from "@/lib/query-provider";
 
 export const metadata: Metadata = {
-  title: "MarketMind AI — Terminal de Inteligência de Mercado",
+  title: "MarketMind Intelligence — Portal de Investimentos",
   description:
-    "Monitoramento em tempo real de criptomoedas, ações brasileiras, FIIs e indicadores macroeconômicos com análise técnica probabilística.",
+    "Portal de inteligência financeira com classes de investimento, indicadores, rankings, rastreadores, comparadores, carteira, macro e alertas operacionais.",
 };
 
 export default function RootLayout({
@@ -15,7 +15,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
-      <body className="font-sans antialiased bg-terminal-bg text-terminal-text min-h-screen">
+      <body className="font-sans antialiased bg-portal-canvas text-portal-ink min-h-screen">
         <QueryProvider>{children}</QueryProvider>
       </body>
     </html>

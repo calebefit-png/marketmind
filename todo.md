@@ -49,3 +49,9 @@
 - [x] Restaurar a disponibilidade das rotas públicas de alertas reativando o banco PostgreSQL gratuito correto; `GET /alerts/status`, `GET /alerts/recent` e `GET /alerts/preferences` voltaram a responder `200`.
 - [x] Diagnosticar por que a primeira execução manual do workflow agendado não registrava heartbeat; a URL externa conectou ao banco e expôs contadores legados nulos.
 - [x] Corrigir o incremento de heartbeat quando registros antigos possuem `processed_events` nulo e validar o fluxo com 27 testes automatizados aprovados.
+- [x] Auditar a interface atual do MarketMind e mapear, página por página, os recursos públicos que precisam evoluir para um portal financeiro abrangente.
+- [x] Definir uma arquitetura de informação MarketMind para ações, FIIs, BDRs, ETFs, criptoativos, renda fixa, macro, commodities, rankings, comparadores, rastreadores, carteira e alertas.
+- [x] Implementar um sistema visual financeiro premium com navegação estruturada, modo escuro, tabelas densas, cards de mercado e identidade própria do MarketMind.
+- [x] Criar as páginas e os fluxos funcionais de descoberta, análise, ranking, comparação, rastreamento e carteira, mantendo a central de alertas existente.
+- [x] Integrar dados verificáveis disponíveis e identificar de forma clara quaisquer informações demonstrativas até a conexão com fontes oficiais.
+- [x] Validar responsividade, acessibilidade, testes de interface e publicação do pacote de atualização no repositório.

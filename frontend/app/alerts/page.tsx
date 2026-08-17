@@ -1,10 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import clsx from "clsx";
 import { api, type AlertHistoryFilters } from "@/lib/api";
+import { PortalShell } from "@/components/portal-shell";
+import { PageHeader } from "@/components/portal-ui";
 
 const SELECT_STYLE = "rounded-sm border border-terminal-border bg-terminal-bg px-3 py-2 font-mono text-xs text-terminal-text outline-none focus:border-accent";
 
@@ -27,18 +28,9 @@ export default function AlertsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-terminal-bg">
-      <header className="border-b border-terminal-border bg-terminal-panel/60 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <div className="flex items-baseline gap-3">
-            <h1 className="font-mono text-lg font-bold tracking-tight text-terminal-text">MARKET<span className="text-accent">MIND</span></h1>
-            <span className="font-mono text-xs text-terminal-muted">CENTRAL DE ALERTAS</span>
-          </div>
-          <Link href="/" className="font-mono text-xs text-accent hover:underline">← Voltar ao terminal</Link>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-7xl space-y-6 px-6 py-6">
+    <PortalShell>
+      <PageHeader eyebrow="Inteligência" title="Central de alertas" description="Histórico verificável de eventos processados pelo MarketMind. Alertas são informativos e não constituem recomendação de investimento." />
+      <div className="space-y-6">
         <section className="rounded-sm border border-terminal-border bg-terminal-panel p-4">
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
             <div>
@@ -95,8 +87,8 @@ export default function AlertsPage() {
           </div>
           {preferences?.paused ? <p className="mt-4 border-l-2 border-warn pl-3 text-xs text-warn">Os alertas estão globalmente pausados.</p> : null}
         </section>
-      </main>
-    </div>
+      </div>
+    </PortalShell>
   );
 }
 

@@ -60,6 +60,71 @@ export interface Candle {
   volume: number;
 }
 
+export interface MarketDataSource {
+  id: string;
+  name: string;
+  source_url: string;
+  license_note: string;
+  update_mode: string;
+  default_delay_seconds: number | null;
+}
+
+export interface MarketQuote {
+  value: number | null;
+  previous_close: number | null;
+  change_percent: number | null;
+  as_of: string | null;
+  received_at: string | null;
+  data_status: "real_time" | "closing" | "delayed" | "unavailable" | string;
+  source: MarketDataSource | null;
+}
+
+export interface VerifiedMarketAsset {
+  symbol: string;
+  exchange: string;
+  asset_class: string;
+  name: string | null;
+  specification: string | null;
+  currency: string;
+  active: boolean;
+  listed_at: string | null;
+  delisted_at: string | null;
+  quote: MarketQuote | null;
+}
+
+export interface MarketAssetListResponse {
+  items: VerifiedMarketAsset[];
+  total: number;
+  source_note: string;
+}
+
+export interface MarketHistoryPoint {
+  time: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+  trades: number | null;
+  data_status: string;
+  as_of: string;
+  received_at: string;
+}
+
+export interface MarketAssetDetailResponse {
+  asset: VerifiedMarketAsset;
+  quote: MarketQuote;
+}
+
+export interface MarketHistoryResponse {
+  asset: VerifiedMarketAsset;
+  timeframe: string;
+  points: MarketHistoryPoint[];
+  source: MarketDataSource | null;
+  truncated: boolean;
+  note: string;
+}
+
 export interface AlertStatus {
   telegram_configured: boolean;
   worker: { status: string; last_run: string | null; last_success: string | null; processed_events: number; sent_alerts: number; last_error: string | null };
@@ -120,6 +185,15 @@ export const api = {
     }>("/health"),
   btcPrice: () => apiFetch<PriceTick>("/market/btc"),
   selic: () => apiFetch<SelicResponse>("/macro/selic"),
+  marketAssets: (filters: { query?: string; assetClass?: string; limit?: number } = {}) => {
+    const params = new URLSearchParams();
+    if (filters.query) params.set("query", filters.query);
+    if (filters.assetClass) params.set("asset_class", filters.assetClass);
+    params.set("limit", String(filters.limit ?? 50));
+    return apiFetch<MarketAssetListResponse>(`/market/assets?${params.toString()}`);
+  },
+  marketAsset: (symbol: string) => apiFetch<MarketAssetDetailResponse>(`/market/assets/${encodeURIComponent(symbol)}`),
+  marketHistory: (symbol: string, limit = 5000) => apiFetch<MarketHistoryResponse>(`/market/assets/${encodeURIComponent(symbol)}/history?limit=${limit}`),
   btcAnalysis: () => apiFetch<AnalysisResponse>("/analysis/btc"),
   alertStatus: () => apiFetch<AlertStatus>("/alerts/status"),
   recentAlerts: (filters: AlertHistoryFilters = {}) => {

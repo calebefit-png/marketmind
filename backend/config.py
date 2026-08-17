@@ -32,6 +32,19 @@ class Settings(BaseSettings):
     BINANCE_WS_URL: str = "wss://stream.binance.com:9443/ws"
     BINANCE_REST_URL: str = "https://api.binance.com/api/v3"
     BCB_SGS_URL: str = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.{code}/dados"
+    # Base pública de dados. COTAHIST é histórico/fechamento e não um feed B3 ao vivo.
+    MARKET_DATA_FREE_MODE: bool = True
+    MARKET_DATA_DEFAULT_LOOKBACK_YEARS: int = 15
+    MARKET_DATA_CACHE_TTL_SECONDS: int = 900
+    MARKET_DATA_B3_WATCHLIST: str = (
+        "PETR4,VALE3,ITUB4,BBAS3,WEGE3,ABEV3,BBDC4,SUZB3,RENT3,PRIO3,"
+        "HGLG11,KNRI11,MXRF11,XPLG11,BCFF11,BOVA11,IVVB11,SMAL11"
+    )
+    B3_COTAHIST_URL_TEMPLATE: str = "https://bvmf.bmfbovespa.com.br/InstDados/SerHist/COTAHIST_A{year}.ZIP"
+    B3_COTAHIST_MAX_ARCHIVE_BYTES: int = 180_000_000
+    # Reservado a uma futura fonte com permissão explícita de redistribuição de cotações em tempo real.
+    MARKET_LIVE_PROVIDER_API_KEY: str = ""
+    MARKET_LIVE_PROVIDER_BASE_URL: str = ""
 
     # Gmail API / OAuth 2.0. Nunca use senha Gmail, SMTP ou Service Account.
     GOOGLE_CLIENT_ID: str = ""
@@ -78,6 +91,10 @@ class Settings(BaseSettings):
     @property
     def alert_email_recipients_list(self) -> list[str]:
         return [recipient.strip() for recipient in self.ALERT_EMAIL_RECIPIENTS.split(",") if recipient.strip()]
+
+    @property
+    def market_data_b3_watchlist(self) -> list[str]:
+        return [symbol.strip().upper() for symbol in self.MARKET_DATA_B3_WATCHLIST.split(",") if symbol.strip()]
 
 
 @lru_cache

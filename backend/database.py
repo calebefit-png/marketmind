@@ -101,6 +101,7 @@ async def init_db() -> bool:
     # Importações tardias evitam ciclos entre database e os modelos ORM.
     from models.candle import Candle  # noqa: F401
     from models.alert import AlertDelivery, AlertEvent, AlertPreference, AlertState  # noqa: F401
+    from models.market_data import DataSource, IngestionRun, MarketAsset, MarketCandle  # noqa: F401
 
     async def create_tables() -> None:
         async with engine.begin() as connection:

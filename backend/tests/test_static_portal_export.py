@@ -23,6 +23,7 @@ class StaticPortalExportTestCase(unittest.TestCase):
             "dividendos/index.html",
             "macro/index.html",
             "alerts/index.html",
+            "ativo/index.html",
         )
 
         missing_routes = [route for route in expected_routes if not (STATIC_DIR / route).is_file()]

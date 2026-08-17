@@ -57,3 +57,14 @@
 - [x] Validar responsividade, acessibilidade, testes de interface e publicação do pacote de atualização no repositório.
 - [x] Corrigir o pipeline de build do Render para gerar a exportação estática do frontend e entregar em produção o portal de investimentos recém-implementado.
 - [x] Validar a página publicada após a atualização do pipeline e preparar o patch corretivo sem incluir artefatos locais ou segredos.
+- [x] Inventariar fontes oficiais, públicas e licenciadas para cada classe de investimento, documentando cobertura, atraso, limites e permissões de uso.
+- [x] Definir a matriz de cobertura de 15 anos por ativo, incluindo preço, proventos, desdobramentos, indicadores fundamentalistas e séries macroeconômicas.
+- [x] Implementar um catálogo canônico de ativos, uma camada de proveniência e estados explícitos de dado em tempo real, fechamento, atrasado ou indisponível.
+- [x] Criar armazenamento histórico, processos idempotentes de carga e atualização contínua por fonte, sem apresentar dados demonstrativos como cotações reais.
+- [x] Integrar gradualmente dados verificáveis para ações, FIIs, ETFs, BDRs, renda fixa, criptoativos, moedas, índices, commodities e macro.
+- [x] Criar páginas de detalhe de ativo com série histórica, proventos, eventos corporativos, indicadores, comparações e carimbo de atualização.
+- [ ] Substituir os dados demonstrativos atuais apenas quando a fonte real correspondente estiver validada e identificada na interface.
+- [ ] Executar auditoria final de bugs, integridade de dados, segurança, desempenho, acessibilidade, responsividade e rotas publicadas.
+- [ ] Produzir uma lista completa e rastreável de recursos adicionados, fontes utilizadas, limitações conhecidas e correções aplicadas.
+- [x] Implementar o modo gratuito como padrão: B3 histórica oficial, CVM, BCB e Binance, com cotações B3 identificadas como fechamento ou atrasadas até a ativação de um provedor licenciado.
+- [x] Deixar adaptadores e variáveis de configuração prontos para uma fonte licenciada futura, sem exigir chave nem custo no modo gratuito.

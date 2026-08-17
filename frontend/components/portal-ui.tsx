@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowDownRight, ArrowUpRight, ChevronDown, ChevronUp, Info, Search, SlidersHorizontal } from "lucide-react";
 import { formatPrice, getCategory, type AssetClass, type MarketAsset, type SourceKind } from "@/lib/portal-data";
+import { api, type VerifiedMarketAsset } from "@/lib/api";
 
 export function PageHeader({ eyebrow, title, description, actions }: { eyebrow?: string; title: string; description: string; actions?: React.ReactNode }) {
   return <div className="mb-7 flex flex-col gap-4 border-b border-portal-line pb-6 xl:flex-row xl:items-end xl:justify-between"><div><p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan-300">{eyebrow ?? "MarketMind Intelligence"}</p><h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-white md:text-4xl">{title}</h1><p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">{description}</p></div>{actions ? <div className="shrink-0">{actions}</div> : null}</div>;
@@ -61,6 +63,36 @@ export function Change({ value }: { value: number }) {
   const positive = value > 0;
   const negative = value < 0;
   return <span className={`inline-flex items-center justify-end gap-1 font-mono text-xs ${positive ? "text-emerald-400" : negative ? "text-rose-400" : "text-slate-500"}`}>{positive ? <ArrowUpRight size={13} /> : negative ? <ArrowDownRight size={13} /> : null}{value === 0 ? "—" : `${value > 0 ? "+" : ""}${value.toFixed(2)}%`}</span>;
+}
+
+export function VerifiedAssetTable({ title, assetClasses }: { title: string; assetClasses: string[] }) {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["verified-market-assets", assetClasses],
+    queryFn: () => api.marketAssets({ limit: 100 }),
+    refetchInterval: 15 * 60_000,
+    retry: 1,
+  });
+  const items = (data?.items ?? []).filter((asset) => assetClasses.includes(asset.asset_class));
+
+  return <section className="mb-7 overflow-hidden rounded-xl border border-sky-400/20 bg-sky-400/[0.035]">
+    <div className="flex flex-col gap-3 border-b border-sky-400/15 p-4 sm:flex-row sm:items-start sm:justify-between"><div><div className="flex items-center gap-2"><h2 className="text-base font-semibold text-slate-100">{title}</h2><SourceBadge source="official" label="Fechamento B3" /></div><p className="mt-1 max-w-3xl text-xs leading-relaxed text-slate-500">Arquivo COTAHIST público da B3. São fechamentos históricos oficiais, não cotações em tempo real. A hora e o estado de cada dado aparecem abaixo.</p></div><span className="font-mono text-[11px] text-slate-500">{items.length} ativo(s) carregado(s)</span></div>
+    <div className="overflow-x-auto"><table className="w-full min-w-[760px] text-left"><thead className="bg-slate-950/35"><tr><th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.13em] text-slate-600">Ativo</th><th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-[0.13em] text-slate-600">Último fechamento</th><th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-[0.13em] text-slate-600">Variação</th><th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-[0.13em] text-slate-600">Referência</th><th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-[0.13em] text-slate-600">Estado</th></tr></thead><tbody className="divide-y divide-slate-800/80">{items.map((asset) => <VerifiedAssetRow key={`${asset.exchange}-${asset.symbol}`} asset={asset} />)}</tbody></table></div>
+    {isLoading ? <VerifiedNotice text="Consultando o catálogo verificado…" /> : null}
+    {isError ? <VerifiedNotice text="A fonte verificada está indisponível no momento. O catálogo demonstrativo abaixo permanece identificado como tal." /> : null}
+    {!isLoading && !isError && items.length === 0 ? <VerifiedNotice text="A sincronização gratuita ainda não carregou esta classe. Quando houver fechamento B3 validado, ele aparecerá aqui com a fonte e a data de referência." /> : null}
+  </section>;
+}
+
+function VerifiedAssetRow({ asset }: { asset: VerifiedMarketAsset }) {
+  const quote = asset.quote;
+  const value = quote?.value == null ? "—" : quote.value.toLocaleString("pt-BR", { style: "currency", currency: asset.currency || "BRL", maximumFractionDigits: 2 });
+  const asOf = quote?.as_of ? new Date(quote.as_of).toLocaleDateString("pt-BR", { timeZone: "UTC" }) : "—";
+  const status = quote?.data_status === "closing" ? "Fechamento" : quote?.data_status === "delayed" ? "Atrasado" : quote?.data_status === "real_time" ? "Tempo real" : "Indisponível";
+  return <tr className="transition hover:bg-sky-400/[0.04]"><td className="px-4 py-3.5"><Link href={`/ativo?symbol=${encodeURIComponent(asset.symbol)}`} className="block"><p className="font-mono text-xs font-semibold text-cyan-200">{asset.symbol}</p><p className="mt-0.5 text-xs text-slate-400">{asset.name ?? asset.specification ?? "Ativo B3"}</p></Link></td><td className="px-4 py-3.5 text-right font-mono text-xs text-slate-100">{value}</td><td className="px-4 py-3.5 text-right">{quote?.change_percent == null ? <span className="font-mono text-xs text-slate-600">—</span> : <Change value={quote.change_percent} />}</td><td className="px-4 py-3.5 text-right font-mono text-xs text-slate-400">{asOf}</td><td className="px-4 py-3.5 text-right"><SourceBadge source={quote?.data_status === "real_time" ? "real-time" : "official"} label={status} /></td></tr>;
+}
+
+function VerifiedNotice({ text }: { text: string }) {
+  return <div className="border-t border-sky-400/15 px-4 py-4 text-center text-xs leading-relaxed text-slate-500">{text}</div>;
 }
 
 export function MiniRanking({ title, assets, metric, href }: { title: string; assets: MarketAsset[]; metric: "dy" | "change" | "marketCap"; href: string }) {

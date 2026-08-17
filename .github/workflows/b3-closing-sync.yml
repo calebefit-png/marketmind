@@ -1,0 +1,55 @@
+name: B3 free closing sync
+
+on:
+  schedule:
+    # Após o fechamento B3; armazena apenas dados oficiais de fechamento, não streaming.
+    - cron: "15 23 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      symbols:
+        description: "Tickers B3 separados por vírgula; vazio usa a lista padrão gratuita"
+        required: false
+        default: ""
+      years:
+        description: "Anos para carga histórica manual (1 a 15); o agendamento usa 1"
+        required: false
+        default: "1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: b3-free-closing-sync
+  cancel-in-progress: false
+
+jobs:
+  sync-b3-closing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install application dependencies
+        run: pip install -r requirements.txt
+
+      - name: Synchronize official B3 closing history
+        shell: bash
+        run: |
+          symbols="${{ inputs.symbols }}"
+          years="${{ inputs.years || '1' }}"
+          if [ -n "$symbols" ]; then
+            python -m scripts.sync_b3_history --symbols "$symbols" --years "$years"
+          else
+            python -m scripts.sync_b3_history --years "$years"
+          fi

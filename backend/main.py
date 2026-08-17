@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
+from contextlib import suppress
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -21,6 +23,7 @@ from schemas.candle import HealthResponse
 from services.binance_stream import binance_stream_service
 from services.notifications.telegram_service import get_telegram_service
 from services.security_headers import apply_security_headers
+from services.startup_tasks import start_database_initialization
 from services.ws_manager import connection_manager, on_binance_tick
 
 logging.basicConfig(
@@ -33,9 +36,7 @@ logger = logging.getLogger("marketmind.main")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Inicializando %s (%s)", settings.APP_NAME, settings.APP_ENV)
-    database_ready = await init_db()
-    if not database_ready:
-        logger.warning("Banco indisponível ou não configurado durante o startup")
+    database_init_task = start_database_initialization(init_db, logger)
     logger.info("Telegram configured: %s", get_telegram_service().is_configured())
 
     binance_stream_service.subscribe(on_binance_tick)
@@ -44,6 +45,10 @@ async def lifespan(app: FastAPI):
     try:
         yield
     finally:
+        if not database_init_task.done():
+            database_init_task.cancel()
+            with suppress(asyncio.CancelledError):
+                await database_init_task
         await binance_stream_service.stop()
         await dispose_db()
         logger.info("%s encerrado", settings.APP_NAME)

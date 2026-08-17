@@ -76,3 +76,5 @@
 - [x] Cancelado por solicitação posterior: construir abertura editorial sem usar a mídia enviada anteriormente.
 - [x] Cancelar a proposta de reformulação editorial e remover sua documentação de planejamento, sem tocar no código visual aprovado.
 - [x] Preservar integralmente a interface, navegação, tipografia e composição atualmente aprovadas durante a integração de dados e a auditoria funcional.
+- [x] Corrigir o carregamento de páginas internas após cold start do Render, sem modificar a interface visual aprovada.
+- [x] Liberar a entrega do portal estático antes da inicialização não crítica do banco, mantendo os endpoints de dados compatíveis.

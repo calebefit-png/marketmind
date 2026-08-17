@@ -55,3 +55,5 @@
 - [x] Criar as páginas e os fluxos funcionais de descoberta, análise, ranking, comparação, rastreamento e carteira, mantendo a central de alertas existente.
 - [x] Integrar dados verificáveis disponíveis e identificar de forma clara quaisquer informações demonstrativas até a conexão com fontes oficiais.
 - [x] Validar responsividade, acessibilidade, testes de interface e publicação do pacote de atualização no repositório.
+- [x] Corrigir o pipeline de build do Render para gerar a exportação estática do frontend e entregar em produção o portal de investimentos recém-implementado.
+- [x] Validar a página publicada após a atualização do pipeline e preparar o patch corretivo sem incluir artefatos locais ou segredos.

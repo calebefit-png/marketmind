@@ -18,6 +18,19 @@ Plataforma de inteligência financeira com IA: monitoramento em tempo real de cr
 6. Configure o Web Service manualmente com os campos acima. Um processo de alertas deve ser criado separadamente conforme a seção de alertas abaixo.
 7. O app agora sobe mesmo sem banco disponível no primeiro deploy (falha de conexão ao Postgres é logada, não derruba o processo); rotas que dependem de banco retornarão erro até `DATABASE_URL` estar correto.
 
+### Portal servido pelo mesmo Web Service
+
+O FastAPI entrega a exportação estática do portal diretamente a partir de `backend/static`. Como o serviço gratuito do Render está definido com **Root Directory `backend`** e runtime Python, ele não compila o Next.js durante o deploy. Por isso, qualquer mudança visual deve ser exportada e incluída no commit antes do `git push`:
+
+```bash
+./scripts/build_static_frontend.sh
+git add backend/static
+git commit -m "build: publish frontend static export"
+git push origin main
+```
+
+O script instala as dependências travadas do frontend, executa a build de produção e substitui `backend/static` pela pasta `frontend/out`. Não copie arquivos manualmente, não envie `frontend/out` ao repositório e não inclua variáveis de ambiente ou segredos nesse processo.
+
 ### Frontend no Netlify
 
 1. Novo site → conectar o repositório.

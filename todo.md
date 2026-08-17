@@ -68,3 +68,4 @@
 - [ ] Produzir uma lista completa e rastreável de recursos adicionados, fontes utilizadas, limitações conhecidas e correções aplicadas.
 - [x] Implementar o modo gratuito como padrão: B3 histórica oficial, CVM, BCB e Binance, com cotações B3 identificadas como fechamento ou atrasadas até a ativação de um provedor licenciado.
 - [x] Deixar adaptadores e variáveis de configuração prontos para uma fonte licenciada futura, sem exigir chave nem custo no modo gratuito.
+- [x] Diagnosticar e corrigir a falha do workflow B3 ao solicitar quinze anos, preservando os dados de um ano já carregados e permitindo retomar a carga de forma idempotente.

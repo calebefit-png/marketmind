@@ -15,6 +15,7 @@ from services.data_providers.b3_cotahist import (
     B3_COTAHIST_SOURCE_URL,
 )
 from services.data_providers.contracts import CandlePoint
+from services.market_batches import batches
 
 
 async def ensure_b3_source() -> None:
@@ -116,23 +117,24 @@ async def upsert_candles(points: list[CandlePoint]) -> int:
                 }
             )
 
-        stmt = pg_insert(MarketCandle).values(rows)
-        stmt = stmt.on_conflict_do_update(
-            index_elements=["asset_id", "timeframe", "time", "source_id"],
-            set_={
-                "open": stmt.excluded.open,
-                "high": stmt.excluded.high,
-                "low": stmt.excluded.low,
-                "close": stmt.excluded.close,
-                "volume": stmt.excluded.volume,
-                "trades": stmt.excluded.trades,
-                "data_status": stmt.excluded.data_status,
-                "as_of": stmt.excluded.as_of,
-                "received_at": stmt.excluded.received_at,
-                "source_record_hash": stmt.excluded.source_record_hash,
-            },
-        )
-        await session.execute(stmt)
+        for batch in batches(rows):
+            stmt = pg_insert(MarketCandle).values(batch)
+            stmt = stmt.on_conflict_do_update(
+                index_elements=["asset_id", "timeframe", "time", "source_id"],
+                set_={
+                    "open": stmt.excluded.open,
+                    "high": stmt.excluded.high,
+                    "low": stmt.excluded.low,
+                    "close": stmt.excluded.close,
+                    "volume": stmt.excluded.volume,
+                    "trades": stmt.excluded.trades,
+                    "data_status": stmt.excluded.data_status,
+                    "as_of": stmt.excluded.as_of,
+                    "received_at": stmt.excluded.received_at,
+                    "source_record_hash": stmt.excluded.source_record_hash,
+                },
+            )
+            await session.execute(stmt)
         await session.commit()
     return len(rows)
 

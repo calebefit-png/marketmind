@@ -7,7 +7,12 @@ from services.data_providers.b3_cotahist import parse_cotahist_lines
 from services.data_providers.contracts import DataStatus
 
 
-def cotahist_line(*, symbol: str = "PETR4", market_type: str = "010") -> str:
+def cotahist_line(
+    *,
+    symbol: str = "PETR4",
+    market_type: str = "010",
+    specification: str = "ON      NM",
+) -> str:
     """Cria um registro mínimo com as colunas relevantes do layout COTAHIST."""
     chars = [" "] * 245
 
@@ -19,7 +24,7 @@ def cotahist_line(*, symbol: str = "PETR4", market_type: str = "010") -> str:
     put(12, 24, symbol)
     put(24, 27, market_type)
     put(27, 39, "PETROBRAS PN")
-    put(39, 49, "ON      NM")
+    put(39, 49, specification)
     put(52, 56, "R$")
     put(56, 69, "0000000037500")
     put(69, 82, "0000000038200")
@@ -51,3 +56,18 @@ class B3CotahistParserTests(unittest.TestCase):
             {"PETR4"},
         )
         self.assertEqual(points, [])
+
+    def test_classifies_watchlist_fiis_and_etfs_when_cotahist_uses_generic_cota_specification(self) -> None:
+        points = parse_cotahist_lines(
+            [
+                cotahist_line(symbol="HGLG11", specification="CI"),
+                cotahist_line(symbol="BOVA11", specification="CI"),
+                cotahist_line(symbol="OUTRO11", specification="CI"),
+            ],
+            {"HGLG11", "BOVA11", "OUTRO11"},
+        )
+
+        asset_classes = {point.asset.symbol: point.asset.asset_class for point in points}
+        self.assertEqual(asset_classes["HGLG11"], "fii")
+        self.assertEqual(asset_classes["BOVA11"], "etf")
+        self.assertEqual(asset_classes["OUTRO11"], "fund_or_etf")

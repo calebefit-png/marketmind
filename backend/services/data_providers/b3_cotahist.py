@@ -33,6 +33,12 @@ B3_COTAHIST_LICENSE_NOTE = (
     "publicados e não equivale a cotação em tempo real."
 )
 
+# O campo de especificação do COTAHIST traz diversos fundos negociados como
+# "CI" (cota), sem distinguir ETF de FII. Mantemos a classificação explícita
+# apenas para a watchlist gratuita, sem inferir tipos para ativos desconhecidos.
+B3_FII_SYMBOLS = frozenset({"BCFF11", "HGLG11", "KNRI11", "MXRF11", "XPLG11"})
+B3_ETF_SYMBOLS = frozenset({"BOVA11", "IVVB11", "SMAL11"})
+
 
 def _decimal_cents(raw: str) -> float:
     """Converte número fixo da B3, expresso com duas casas implícitas."""
@@ -45,6 +51,10 @@ def _decimal_cents(raw: str) -> float:
 def _asset_class(symbol: str, specification: str) -> str:
     """Classificação prudente, usada apenas para a navegação; não altera o dado B3."""
     spec = specification.upper()
+    if symbol in B3_FII_SYMBOLS:
+        return "fii"
+    if symbol in B3_ETF_SYMBOLS:
+        return "etf"
     if "FII" in spec:
         return "fii"
     if "ETF" in spec:

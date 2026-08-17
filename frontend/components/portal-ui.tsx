@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowDownRight, ArrowUpRight, ChevronDown, ChevronUp, Info, Search, SlidersHorizontal } from "lucide-react";
 import { formatPrice, getCategory, type AssetClass, type MarketAsset, type SourceKind } from "@/lib/portal-data";
 import { api, type VerifiedMarketAsset } from "@/lib/api";
+import { belongsToVerifiedClasses } from "@/lib/verified-market";
 
 export function PageHeader({ eyebrow, title, description, actions }: { eyebrow?: string; title: string; description: string; actions?: React.ReactNode }) {
   return <div className="mb-7 flex flex-col gap-4 border-b border-portal-line pb-6 xl:flex-row xl:items-end xl:justify-between"><div><p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan-300">{eyebrow ?? "MarketMind Intelligence"}</p><h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-white md:text-4xl">{title}</h1><p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">{description}</p></div>{actions ? <div className="shrink-0">{actions}</div> : null}</div>;
@@ -67,12 +68,12 @@ export function Change({ value }: { value: number }) {
 
 export function VerifiedAssetTable({ title, assetClasses }: { title: string; assetClasses: string[] }) {
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["verified-market-assets", assetClasses],
+    queryKey: ["verified-market-assets", assetClasses.join(",")],
     queryFn: () => api.marketAssets({ limit: 100 }),
-    refetchInterval: 15 * 60_000,
+    refetchInterval: 60_000,
     retry: 1,
   });
-  const items = (data?.items ?? []).filter((asset) => assetClasses.includes(asset.asset_class));
+  const items = (data?.items ?? []).filter((asset) => belongsToVerifiedClasses(asset, assetClasses));
 
   return <section className="mb-7 overflow-hidden rounded-xl border border-sky-400/20 bg-sky-400/[0.035]">
     <div className="flex flex-col gap-3 border-b border-sky-400/15 p-4 sm:flex-row sm:items-start sm:justify-between"><div><div className="flex items-center gap-2"><h2 className="text-base font-semibold text-slate-100">{title}</h2><SourceBadge source="official" label="Fechamento B3" /></div><p className="mt-1 max-w-3xl text-xs leading-relaxed text-slate-500">Arquivo COTAHIST público da B3. São fechamentos históricos oficiais, não cotações em tempo real. A hora e o estado de cada dado aparecem abaixo.</p></div><span className="font-mono text-[11px] text-slate-500">{items.length} ativo(s) carregado(s)</span></div>
@@ -80,6 +81,29 @@ export function VerifiedAssetTable({ title, assetClasses }: { title: string; ass
     {isLoading ? <VerifiedNotice text="Consultando o catálogo verificado…" /> : null}
     {isError ? <VerifiedNotice text="A fonte verificada está indisponível no momento. O catálogo demonstrativo abaixo permanece identificado como tal." /> : null}
     {!isLoading && !isError && items.length === 0 ? <VerifiedNotice text="A sincronização gratuita ainda não carregou esta classe. Quando houver fechamento B3 validado, ele aparecerá aqui com a fonte e a data de referência." /> : null}
+  </section>;
+}
+
+export function VerifiedCategorySummary({ assetClasses }: { assetClasses: string[] }) {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["verified-category-summary", assetClasses.join(",")],
+    queryFn: () => api.marketAssets({ limit: 100 }),
+    refetchInterval: 60_000,
+    retry: 1,
+  });
+  const items = (data?.items ?? []).filter((asset) => belongsToVerifiedClasses(asset, assetClasses));
+  const quotes = items.filter((asset) => asset.quote?.change_percent != null);
+  const positive = quotes.filter((asset) => (asset.quote?.change_percent ?? 0) > 0).length;
+  const leader = [...quotes].sort((left, right) => (right.quote?.change_percent ?? -Infinity) - (left.quote?.change_percent ?? -Infinity))[0];
+  const latestAsOf = items.map((asset) => asset.quote?.as_of).filter((value): value is string => Boolean(value)).sort().at(-1);
+  const latestDate = latestAsOf ? new Date(latestAsOf).toLocaleDateString("pt-BR", { timeZone: "UTC" }) : "Sem fechamento disponível";
+  const unavailable = isError ? "Consulta indisponível" : "Aguardando fechamento";
+
+  return <section className="mb-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <MetricCard label="Ativos exibidos" value={isLoading ? "—" : String(items.length)} detail={isLoading ? "Consultando catálogo" : "Fechamentos verificados"} source="official" />
+    <MetricCard label="Altas no painel" value={isLoading ? "—" : `${positive}/${quotes.length}`} detail={isLoading ? "Consultando fonte" : `Referência ${latestDate}`} source="official" />
+    <MetricCard label="Maior variação" value={leader?.quote?.change_percent == null ? "—" : `${leader.quote.change_percent > 0 ? "+" : ""}${leader.quote.change_percent.toFixed(2)}%`} detail={leader ? `${leader.symbol} · ${latestDate}` : unavailable} source="official" />
+    <article className="rounded-xl border border-slate-800 bg-slate-900/40 p-4"><div className="flex items-center gap-2"><Info size={16} className="text-cyan-300" /><p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Estado da fonte</p></div><div className="mt-3"><SourceBadge source="official" label="Fechamento B3" /></div><p className="mt-2 text-xs text-slate-500">COTAHIST público. Referência: {latestDate}.</p></article>
   </section>;
 }
 

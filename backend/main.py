@@ -6,7 +6,7 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -20,6 +20,7 @@ from database import check_database, dispose_db, init_db
 from schemas.candle import HealthResponse
 from services.binance_stream import binance_stream_service
 from services.notifications.telegram_service import get_telegram_service
+from services.security_headers import apply_security_headers
 from services.ws_manager import connection_manager, on_binance_tick
 
 logging.basicConfig(
@@ -67,6 +68,13 @@ app.add_middleware(
     allow_methods=["GET", "OPTIONS"],
     allow_headers=["Accept", "Content-Type"],
 )
+
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    """Adiciona proteção de transporte e conteúdo sem interferir no portal estático."""
+    response = await call_next(request)
+    return apply_security_headers(response, production=settings.APP_ENV == "production")
 
 app.include_router(market_router, prefix=settings.API_V1_PREFIX)
 app.include_router(prediction_router, prefix=settings.API_V1_PREFIX)

@@ -63,9 +63,16 @@
 - [x] Criar armazenamento histórico, processos idempotentes de carga e atualização contínua por fonte, sem apresentar dados demonstrativos como cotações reais.
 - [x] Integrar gradualmente dados verificáveis para ações, FIIs, ETFs, BDRs, renda fixa, criptoativos, moedas, índices, commodities e macro.
 - [x] Criar páginas de detalhe de ativo com série histórica, proventos, eventos corporativos, indicadores, comparações e carimbo de atualização.
-- [ ] Substituir os dados demonstrativos atuais apenas quando a fonte real correspondente estiver validada e identificada na interface.
-- [ ] Executar auditoria final de bugs, integridade de dados, segurança, desempenho, acessibilidade, responsividade e rotas publicadas.
-- [ ] Produzir uma lista completa e rastreável de recursos adicionados, fontes utilizadas, limitações conhecidas e correções aplicadas.
+- [x] Substituir os dados demonstrativos atuais apenas quando a fonte real correspondente estiver validada e identificada na interface.
+- [x] Executar auditoria final de bugs, integridade de dados, segurança, desempenho, acessibilidade, responsividade e rotas publicadas.
+- [x] Produzir uma lista completa e rastreável de recursos adicionados, fontes utilizadas, limitações conhecidas e correções aplicadas.
 - [x] Implementar o modo gratuito como padrão: B3 histórica oficial, CVM, BCB e Binance, com cotações B3 identificadas como fechamento ou atrasadas até a ativação de um provedor licenciado.
 - [x] Deixar adaptadores e variáveis de configuração prontos para uma fonte licenciada futura, sem exigir chave nem custo no modo gratuito.
 - [x] Diagnosticar e corrigir a falha do workflow B3 ao solicitar quinze anos, preservando os dados de um ano já carregados e permitindo retomar a carga de forma idempotente.
+- [x] Cancelado por solicitação posterior: analisar a referência editorial indicada e definir uma adaptação visual própria para o MarketMind.
+- [x] Cancelado por solicitação posterior: implementar uma abertura cinematográfica com vídeo de fundo, sobreposição de contraste, opção de reduzir movimento e imagem de fallback.
+- [x] Cancelado por solicitação posterior: reorganizar a experiência de descoberta e páginas de mercado em blocos editoriais.
+- [x] Cancelado por solicitação posterior: validar uma camada de mídia, contraste e desempenho associada à proposta editorial.
+- [x] Cancelado por solicitação posterior: construir abertura editorial sem usar a mídia enviada anteriormente.
+- [x] Cancelar a proposta de reformulação editorial e remover sua documentação de planejamento, sem tocar no código visual aprovado.
+- [x] Preservar integralmente a interface, navegação, tipografia e composição atualmente aprovadas durante a integração de dados e a auditoria funcional.

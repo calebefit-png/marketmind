@@ -78,3 +78,5 @@
 - [x] Preservar integralmente a interface, navegação, tipografia e composição atualmente aprovadas durante a integração de dados e a auditoria funcional.
 - [x] Corrigir o carregamento de páginas internas após cold start do Render, sem modificar a interface visual aprovada.
 - [x] Liberar a entrega do portal estático antes da inicialização não crítica do banco, mantendo os endpoints de dados compatíveis.
+- [x] Investigar e corrigir a falha persistente de páginas internas após o deploy Render, sem alterar a interface aprovada.
+- [x] Substituir a rota dinâmica de categorias por rotas estáticas equivalentes para eliminar o artefato de erro do Next.js em `/acoes/` e classes correlatas.

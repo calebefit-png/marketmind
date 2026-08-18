@@ -37,6 +37,11 @@ class StaticPortalExportTestCase(unittest.TestCase):
         self.assertIn("Mercado em contexto, não em ruído", homepage)
         self.assertNotIn("github_pat_", homepage)
 
+    def test_category_routes_are_exported_as_concrete_static_segments(self):
+        for route in ("acoes", "fiis", "etfs", "bdrs", "cripto", "renda-fixa"):
+            tree = (STATIC_DIR / route / "__next._tree.txt").read_text(encoding="utf-8")
+            self.assertNotIn('"name":"category"', tree)
+
 
 if __name__ == "__main__":
     unittest.main()

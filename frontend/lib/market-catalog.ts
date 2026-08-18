@@ -25,16 +25,11 @@ function verifiedAssetToCatalogAsset(asset: VerifiedMarketAsset): MarketAsset | 
   };
 }
 
-/**
- * Prioriza uma cotação verificada quando o mesmo ticker também existe no
- * catálogo de contexto. Itens sem cobertura oficial continuam explicitamente
- * marcados como demonstrativos no componente de origem já existente.
- */
+/** Retorna exclusivamente instrumentos cujas cotações foram obtidas de fonte verificada. */
 export function mergeWithVerifiedMarketAssets(
-  baseAssets: MarketAsset[],
+  _baseAssets: MarketAsset[],
   verifiedAssets: VerifiedMarketAsset[],
 ): MarketAsset[] {
   const converted = verifiedAssets.map(verifiedAssetToCatalogAsset).filter((asset): asset is MarketAsset => asset !== null);
-  const verifiedTickers = new Set(converted.map((asset) => asset.ticker));
-  return [...baseAssets.filter((asset) => !verifiedTickers.has(asset.ticker)), ...converted];
+  return converted;
 }

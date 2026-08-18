@@ -84,3 +84,5 @@
 - [x] Identificar por que uma sessão pública recebe a página real após o cold start enquanto outra recebe a tela de erro do navegador.
 - [x] Servir os payloads RSC estáticos exigidos pelo App Router do Next.js nas navegações internas, sem alterar a interface.
 - [x] Capturar e eliminar a causa remanescente que ainda faz sessões públicas exibirem “This page couldn't load” em rotas internas após a confirmação do payload RSC correto.
+- [ ] Verificar a procedência, a defasagem e a comparabilidade dos números exibidos no MarketMind com aplicativos de investimento e busca pública.
+- [x] Remover do portal todo número demonstrativo e substituí-lo por dado verificável, fonte identificada ou estado explícito de indisponibilidade, sem alterar o visual aprovado.

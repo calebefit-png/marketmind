@@ -114,7 +114,7 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
           <nav className="space-y-0.5">{assetCategories.map((category) => <SideLink key={category.slug} href={`/${category.slug}`} active={isCurrent(pathname, `/${category.slug}`)} icon={<Gem size={15} />}>{category.label}</SideLink>)}</nav>
           <p className="mb-3 mt-7 px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-600">Acompanhar</p>
           <nav className="space-y-1">{utilityNav.map(({ label, href, icon: Icon }) => <SideLink key={href} href={href} active={isCurrent(pathname, href)} icon={<Icon size={16} />}>{label}</SideLink>)}</nav>
-          <div className="mt-8 rounded-xl border border-cyan-400/15 bg-cyan-400/[0.06] p-3"><Landmark size={17} className="text-cyan-300" /><p className="mt-3 text-xs font-semibold text-slate-200">Fontes transparentes</p><p className="mt-1 text-[11px] leading-relaxed text-slate-500">Identificamos dados em tempo real, oficiais e demonstrativos.</p></div>
+          <div className="mt-8 rounded-xl border border-cyan-400/15 bg-cyan-400/[0.06] p-3"><Landmark size={17} className="text-cyan-300" /><p className="mt-3 text-xs font-semibold text-slate-200">Fontes transparentes</p><p className="mt-1 text-[11px] leading-relaxed text-slate-500">Identificamos dados em tempo real, oficiais e fontes ainda não integradas.</p></div>
         </aside>
         <main className="min-w-0 px-4 py-6 lg:px-8 lg:py-8">{children}</main>
       </div>

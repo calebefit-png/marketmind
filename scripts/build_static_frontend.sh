@@ -11,8 +11,10 @@ STATIC_DIR="$ROOT_DIR/backend/static"
 cd "$FRONTEND_DIR"
 pnpm install --frozen-lockfile
 # O Webpack apresenta consumo de memória mais previsível que o padrão Turbopack
-# neste projeto durante a exportação estática completa.
-NODE_ENV=production pnpm exec next build --webpack
+# neste projeto durante a exportação estática completa. O Next define NODE_ENV
+# internamente; uma variável herdada pode causar falha de pré-renderização com
+# React 19, por isso ela é removida somente durante o build.
+env -u NODE_ENV pnpm exec next build --webpack
 
 rm -rf "$STATIC_DIR"
 mkdir -p "$STATIC_DIR"

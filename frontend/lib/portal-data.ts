@@ -15,8 +15,7 @@ export type AssetClass =
   | "commodities"
   | "startups";
 
-/** @deprecated O estado demo é mantido apenas para compatibilidade de tipos durante a remoção do catálogo legado. */
-export type SourceKind = "demo" | "unavailable" | "real-time" | "official";
+export type SourceKind = "unavailable" | "real-time" | "official" | "reference";
 
 export interface MarketAsset {
   ticker: string;

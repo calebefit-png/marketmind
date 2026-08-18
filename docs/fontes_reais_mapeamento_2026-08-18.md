@@ -11,6 +11,9 @@
 | Tesouro Direto | [Histórico de preços e taxas](https://www.tesourodireto.com.br/en/produtos/dados-sobre-titulos/historico-de-precos-e-taxas) | Página oficial com históricos anuais de preços e taxas. A disponibilidade depende do horário de funcionamento e de eventuais manutenções da plataforma; a extração deve tratar indisponibilidade como ausência de dado, nunca como valor estimado. |
 | Ibovespa e IFIX | [Yahoo Finance — ^BVSP](https://finance.yahoo.com/quote/%5EBVSP/) e [Yahoo Finance — IFIX.SA](https://finance.yahoo.com/quote/IFIX.SA/) | Feed público integrado ao ticker com valor, fechamento anterior, horário de mercado e origem identificada. A API classifica a resposta como potencialmente atrasada; o portal não a apresenta como fechamento oficial intradiário da B3. |
 | Brent | [Yahoo Finance — BZ=F](https://finance.yahoo.com/quote/BZ%3DF/) | Cotação do contrato futuro de Brent integrada ao ticker, com moeda, horário de mercado, variação e aviso de possível atraso do feed público. |
+| Tesouro Direto | [Tesouro Transparente — Taxas dos Títulos Ofertados](https://www.tesourotransparente.gov.br/ckan/dataset/taxas-dos-titulos-ofertados-pelo-tesouro-direto/resource/796d2059-14e9-44e3-80c9-2d9e30b405c1) | Arquivo diário oficial de preços e taxas; cada título deve informar a data do arquivo, a taxa e o preço retornados. |
+| Fundos de investimento | [CVM — Dados Abertos de Fundos](https://dados.cvm.gov.br/) | Dados cadastrais e informes periódicos públicos; o portal deve identificar o período do informe e nunca apresentá-lo como cotação intradiária. |
+| Startups e empresas não listadas | [Receita Federal — Dados Abertos](https://www.gov.br/receitafederal/pt-br/acesso-a-informacao/dados-abertos) | Cadastro empresarial público; útil para situação cadastral e atividade econômica, mas não fornece preço, valuation ou rentabilidade. |
 
 ## Decisão de integridade
 

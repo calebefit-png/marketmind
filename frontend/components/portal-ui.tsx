@@ -14,8 +14,8 @@ export function PageHeader({ eyebrow, title, description, actions }: { eyebrow?:
 }
 
 export function SourceBadge({ source, label }: { source: SourceKind; label?: string }) {
-  const styles = source === "real-time" ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-300" : source === "official" ? "border-sky-400/20 bg-sky-400/10 text-sky-300" : "border-amber-400/20 bg-amber-400/10 text-amber-200";
-  const text = label ?? (source === "real-time" ? "Tempo real" : source === "official" ? "Fonte oficial" : "Fonte não integrada");
+  const styles = source === "real-time" ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-300" : source === "official" ? "border-sky-400/20 bg-sky-400/10 text-sky-300" : source === "reference" ? "border-violet-400/20 bg-violet-400/10 text-violet-200" : "border-amber-400/20 bg-amber-400/10 text-amber-200";
+  const text = label ?? (source === "real-time" ? "Tempo real" : source === "official" ? "Fonte oficial" : source === "reference" ? "Fonte de referência" : "Indisponível agora");
   return <span className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-wider ${styles}`}><span className="h-1.5 w-1.5 rounded-full bg-current" />{text}</span>;
 }
 

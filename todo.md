@@ -88,3 +88,4 @@
 - [x] Remover do portal todo número demonstrativo e substituí-lo por dado verificável, fonte identificada ou estado explícito de indisponibilidade, sem alterar o visual aprovado.
 - [x] Remover os indicadores estáticos remanescentes no ticker do cabeçalho, incluindo dólar, índices e Brent, preservando apenas fontes verificáveis ou indisponibilidade explícita.
 - [x] Integrar individualmente fontes gratuitas e verificáveis para USD/BRL, Ibovespa, IFIX e Brent, exibindo origem e atualização sem alterar o ticker aprovado.
+- [x] Inventariar e eliminar todos os rótulos residuais de “Fonte não integrada” nas páginas públicas, conectando uma fonte verificável ou declarando indisponibilidade específica por área.

@@ -21,6 +21,7 @@ import {
   X,
 } from "lucide-react";
 import { assetCategories, assets, type AssetClass } from "@/lib/portal-data";
+import { marketTickers } from "@/lib/market-tickers";
 
 const primaryNav = [
   { label: "Visão geral", href: "/", icon: LayoutDashboard },
@@ -34,15 +35,6 @@ const utilityNav = [
   { label: "Dividendos", href: "/dividendos", icon: CircleDollarSign },
   { label: "Alertas", href: "/alerts", icon: BellRing },
   { label: "Guias", href: "/guias", icon: BookOpen },
-];
-
-const tickers = [
-  { label: "USD", value: "R$ 5,22", delta: "+0,73%", direction: "up" },
-  { label: "IBOV", value: "166.934", delta: "−0,10%", direction: "down" },
-  { label: "IFIX", value: "3.686", delta: "−0,17%", direction: "down" },
-  { label: "BTC", value: "ao vivo", delta: "Binance", direction: "neutral" },
-  { label: "SELIC", value: "oficial", delta: "BCB", direction: "neutral" },
-  { label: "BRENT", value: "R$ 485,88", delta: "demo", direction: "down" },
 ];
 
 function isCurrent(pathname: string, href: string) {
@@ -102,7 +94,7 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
         {isMarketOpen ? <div className="absolute inset-x-0 top-16 hidden border-b border-portal-line bg-slate-950/98 p-6 shadow-2xl lg:block"><div className="mx-auto grid max-w-[1500px] grid-cols-5 gap-x-6 gap-y-1">{assetCategories.map((category) => <Link onClick={() => setMarketOpen(false)} key={category.slug} href={`/${category.slug}`} className="rounded-lg p-3 transition hover:bg-slate-900"><span className="text-sm font-semibold text-slate-100">{category.label}</span><p className="mt-1 text-xs leading-relaxed text-slate-500">{category.description}</p></Link>)}</div></div> : null}
       </header>
 
-      <div className="border-b border-portal-line bg-slate-950/70"><div className="ticker-mask mx-auto flex max-w-[1600px] items-center gap-0 overflow-x-auto px-4 lg:px-6">{tickers.map((ticker) => <div key={ticker.label} className="flex shrink-0 items-center gap-2 border-r border-slate-800 px-4 py-2.5 first:pl-0"><span className="font-mono text-[11px] font-semibold text-slate-500">{ticker.label}</span><span className="font-mono text-xs text-slate-200">{ticker.value}</span><span className={`font-mono text-[11px] ${ticker.direction === "up" ? "text-emerald-400" : ticker.direction === "down" ? "text-rose-400" : "text-slate-500"}`}>{ticker.delta}</span></div>)}</div></div>
+      <div className="border-b border-portal-line bg-slate-950/70"><div className="ticker-mask mx-auto flex max-w-[1600px] items-center gap-0 overflow-x-auto px-4 lg:px-6">{marketTickers.map((ticker) => <div key={ticker.label} className="flex shrink-0 items-center gap-2 border-r border-slate-800 px-4 py-2.5 first:pl-0"><span className="font-mono text-[11px] font-semibold text-slate-500">{ticker.label}</span><span className="font-mono text-xs text-slate-200">{ticker.value}</span><span className={`font-mono text-[11px] ${ticker.direction === "up" ? "text-emerald-400" : ticker.direction === "down" ? "text-rose-400" : "text-slate-500"}`}>{ticker.delta}</span></div>)}</div></div>
 
       <div className="mx-auto grid max-w-[1600px] grid-cols-1 lg:grid-cols-[232px_minmax(0,1fr)]">
         <aside className="hidden min-h-[calc(100vh-106px)] border-r border-portal-line px-4 py-6 lg:block">

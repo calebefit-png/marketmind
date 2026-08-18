@@ -86,3 +86,4 @@
 - [x] Capturar e eliminar a causa remanescente que ainda faz sessões públicas exibirem “This page couldn't load” em rotas internas após a confirmação do payload RSC correto.
 - [ ] Verificar a procedência, a defasagem e a comparabilidade dos números exibidos no MarketMind com aplicativos de investimento e busca pública.
 - [x] Remover do portal todo número demonstrativo e substituí-lo por dado verificável, fonte identificada ou estado explícito de indisponibilidade, sem alterar o visual aprovado.
+- [x] Remover os indicadores estáticos remanescentes no ticker do cabeçalho, incluindo dólar, índices e Brent, preservando apenas fontes verificáveis ou indisponibilidade explícita.

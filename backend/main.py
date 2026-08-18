@@ -10,6 +10,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from api.routes.gmail_auth import router as gmail_auth_router
@@ -21,6 +22,7 @@ from config import settings
 from database import check_database, dispose_db, init_db
 from schemas.candle import HealthResponse
 from services.binance_stream import binance_stream_service
+from services.next_static import rsc_payload_path
 from services.notifications.telegram_service import get_telegram_service
 from services.security_headers import apply_security_headers
 from services.startup_tasks import start_database_initialization
@@ -77,8 +79,21 @@ app.add_middleware(
 
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
-    """Adiciona proteção de transporte e conteúdo sem interferir no portal estático."""
-    response = await call_next(request)
+    """Protege respostas e atende payloads RSC do portal exportado estaticamente."""
+    payload = None
+    if frontend_dir.is_dir() and request.headers.get("rsc") == "1":
+        payload = rsc_payload_path(frontend_dir, request.url.path)
+
+    if payload is not None:
+        response = FileResponse(
+            payload,
+            media_type="text/x-component",
+            headers={
+                "Vary": "RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Url",
+            },
+        )
+    else:
+        response = await call_next(request)
     return apply_security_headers(response, production=settings.APP_ENV == "production")
 
 app.include_router(market_router, prefix=settings.API_V1_PREFIX)

@@ -80,3 +80,6 @@
 - [x] Liberar a entrega do portal estático antes da inicialização não crítica do banco, mantendo os endpoints de dados compatíveis.
 - [x] Investigar e corrigir a falha persistente de páginas internas após o deploy Render, sem alterar a interface aprovada.
 - [x] Substituir a rota dinâmica de categorias por rotas estáticas equivalentes para eliminar o artefato de erro do Next.js em `/acoes/` e classes correlatas.
+- [x] Investigar a persistência da tela “This page couldn't load” no acesso público após o commit de rotas estáticas.
+- [x] Identificar por que uma sessão pública recebe a página real após o cold start enquanto outra recebe a tela de erro do navegador.
+- [x] Servir os payloads RSC estáticos exigidos pelo App Router do Next.js nas navegações internas, sem alterar a interface.

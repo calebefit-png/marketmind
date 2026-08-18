@@ -5,6 +5,7 @@ from pathlib import Path
 import unittest
 
 from schemas.market_data import MarketQuoteRead
+from services.currency import normalize_currency_code
 from services.data_providers.contracts import DataStatus
 
 
@@ -30,3 +31,9 @@ class MarketDataContractTests(unittest.TestCase):
         quote = MarketQuoteRead(data_status=DataStatus.UNAVAILABLE.value)
         self.assertIsNone(quote.value)
         self.assertEqual(quote.data_status, "unavailable")
+
+    def test_normalizes_legacy_currency_markers_before_public_serialization(self) -> None:
+        self.assertEqual(normalize_currency_code("R$"), "BRL")
+        self.assertEqual(normalize_currency_code("US$"), "USD")
+        self.assertEqual(normalize_currency_code("BRL"), "BRL")
+        self.assertEqual(normalize_currency_code("invalid"), "BRL")

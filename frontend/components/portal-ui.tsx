@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowDownRight, ArrowUpRight, ChevronDown, ChevronUp, Info, Search, SlidersHorizontal } from "lucide-react";
 import { formatPrice, getCategory, type AssetClass, type MarketAsset, type SourceKind } from "@/lib/portal-data";
 import { api, type VerifiedMarketAsset } from "@/lib/api";
+import { normalizeCurrencyCode } from "@/lib/currency";
 import { belongsToVerifiedClasses } from "@/lib/verified-market";
 
 export function PageHeader({ eyebrow, title, description, actions }: { eyebrow?: string; title: string; description: string; actions?: React.ReactNode }) {
@@ -109,7 +110,7 @@ export function VerifiedCategorySummary({ assetClasses }: { assetClasses: string
 
 function VerifiedAssetRow({ asset }: { asset: VerifiedMarketAsset }) {
   const quote = asset.quote;
-  const value = quote?.value == null ? "—" : quote.value.toLocaleString("pt-BR", { style: "currency", currency: asset.currency || "BRL", maximumFractionDigits: 2 });
+  const value = quote?.value == null ? "—" : quote.value.toLocaleString("pt-BR", { style: "currency", currency: normalizeCurrencyCode(asset.currency), maximumFractionDigits: 2 });
   const asOf = quote?.as_of ? new Date(quote.as_of).toLocaleDateString("pt-BR", { timeZone: "UTC" }) : "—";
   const status = quote?.data_status === "closing" ? "Fechamento" : quote?.data_status === "delayed" ? "Atrasado" : quote?.data_status === "real_time" ? "Tempo real" : "Indisponível";
   return <tr className="transition hover:bg-sky-400/[0.04]"><td className="px-4 py-3.5"><Link href={`/ativo?symbol=${encodeURIComponent(asset.symbol)}`} className="block"><p className="font-mono text-xs font-semibold text-cyan-200">{asset.symbol}</p><p className="mt-0.5 text-xs text-slate-400">{asset.name ?? asset.specification ?? "Ativo B3"}</p></Link></td><td className="px-4 py-3.5 text-right font-mono text-xs text-slate-100">{value}</td><td className="px-4 py-3.5 text-right">{quote?.change_percent == null ? <span className="font-mono text-xs text-slate-600">—</span> : <Change value={quote.change_percent} />}</td><td className="px-4 py-3.5 text-right font-mono text-xs text-slate-400">{asOf}</td><td className="px-4 py-3.5 text-right"><SourceBadge source={quote?.data_status === "real_time" ? "real-time" : "official"} label={status} /></td></tr>;

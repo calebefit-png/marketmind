@@ -29,12 +29,18 @@ from schemas.market_data import (
 )
 from services.bcb_service import bcb_service
 from services.binance_stream import binance_stream_service
+from services.currency import normalize_currency_code
 from services.technical_analysis import candles_to_dataframe, compute_indicators
 from services.trend_engine import classify_trend
 
 logger = logging.getLogger("marketmind.routes.market")
 
 router = APIRouter(tags=["market"])
+
+
+def _currency_code(currency: str | None) -> str:
+    """Mantém a API em ISO 4217 inclusive para registros COTAHIST legados."""
+    return normalize_currency_code(currency)
 
 
 def _asset_read(asset: MarketAsset, quote: MarketQuoteRead | None = None) -> MarketAssetRead:
@@ -44,7 +50,7 @@ def _asset_read(asset: MarketAsset, quote: MarketQuoteRead | None = None) -> Mar
         asset_class=asset.asset_class,
         name=asset.name,
         specification=asset.specification,
-        currency=asset.currency,
+        currency=_currency_code(asset.currency),
         active=asset.active,
         listed_at=asset.listed_at.isoformat() if asset.listed_at else None,
         delisted_at=asset.delisted_at.isoformat() if asset.delisted_at else None,

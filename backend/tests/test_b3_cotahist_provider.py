@@ -3,7 +3,7 @@
 from datetime import datetime, timezone
 import unittest
 
-from services.data_providers.b3_cotahist import parse_cotahist_lines
+from services.data_providers.b3_cotahist import normalize_b3_currency, parse_cotahist_lines
 from services.data_providers.contracts import DataStatus
 
 
@@ -44,6 +44,7 @@ class B3CotahistParserTests(unittest.TestCase):
         self.assertEqual(point.asset.symbol, "PETR4")
         self.assertEqual(point.asset.exchange, "B3")
         self.assertEqual(point.asset.asset_class, "stock")
+        self.assertEqual(point.asset.currency, "BRL")
         self.assertEqual(point.close, 380.0)
         self.assertEqual(point.volume, 1234567.89)
         self.assertEqual(point.trades, 123)
@@ -71,3 +72,8 @@ class B3CotahistParserTests(unittest.TestCase):
         self.assertEqual(asset_classes["HGLG11"], "fii")
         self.assertEqual(asset_classes["BOVA11"], "etf")
         self.assertEqual(asset_classes["OUTRO11"], "fund_or_etf")
+
+    def test_normalizes_b3_currency_markers_to_iso_codes(self) -> None:
+        self.assertEqual(normalize_b3_currency("R$"), "BRL")
+        self.assertEqual(normalize_b3_currency("US$"), "USD")
+        self.assertEqual(normalize_b3_currency("BRL"), "BRL")

@@ -17,6 +17,7 @@ import zipfile
 import httpx
 
 from config import settings
+from services.currency import normalize_currency_code
 from services.data_providers.contracts import (
     AssetIdentity,
     CandlePoint,
@@ -38,6 +39,11 @@ B3_COTAHIST_LICENSE_NOTE = (
 # apenas para a watchlist gratuita, sem inferir tipos para ativos desconhecidos.
 B3_FII_SYMBOLS = frozenset({"BCFF11", "HGLG11", "KNRI11", "MXRF11", "XPLG11"})
 B3_ETF_SYMBOLS = frozenset({"BOVA11", "IVVB11", "SMAL11"})
+
+
+def normalize_b3_currency(raw: str) -> str:
+    """Converte a abreviação monetária do COTAHIST para código ISO 4217."""
+    return normalize_currency_code(raw)
 
 
 def _decimal_cents(raw: str) -> float:
@@ -88,7 +94,7 @@ def parse_cotahist_lines(lines: Iterable[str], symbols: set[str]) -> list[Candle
             time = datetime.strptime(line[2:10], "%Y%m%d").replace(tzinfo=timezone.utc)
             name = line[27:39].strip() or None
             specification = line[39:49].strip() or None
-            currency = line[52:56].strip() or "BRL"
+            currency = normalize_b3_currency(line[52:56])
             open_price = _decimal_cents(line[56:69])
             high_price = _decimal_cents(line[69:82])
             low_price = _decimal_cents(line[82:95])

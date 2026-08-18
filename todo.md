@@ -83,3 +83,4 @@
 - [x] Investigar a persistência da tela “This page couldn't load” no acesso público após o commit de rotas estáticas.
 - [x] Identificar por que uma sessão pública recebe a página real após o cold start enquanto outra recebe a tela de erro do navegador.
 - [x] Servir os payloads RSC estáticos exigidos pelo App Router do Next.js nas navegações internas, sem alterar a interface.
+- [x] Capturar e eliminar a causa remanescente que ainda faz sessões públicas exibirem “This page couldn't load” em rotas internas após a confirmação do payload RSC correto.

@@ -79,6 +79,23 @@ export interface MarketQuote {
   source: MarketDataSource | null;
 }
 
+export interface ReferenceTickerQuote {
+  symbol: string;
+  label: string;
+  value: number | null;
+  previous_close: number | null;
+  change_percent: number | null;
+  currency: string | null;
+  as_of: string | null;
+  received_at: string;
+  data_status: "closing" | "delayed" | "unavailable" | string;
+  source: MarketDataSource;
+}
+
+export interface ReferenceTickerResponse {
+  items: ReferenceTickerQuote[];
+}
+
 export interface VerifiedMarketAsset {
   symbol: string;
   exchange: string;
@@ -185,6 +202,7 @@ export const api = {
     }>("/health"),
   btcPrice: () => apiFetch<PriceTick>("/market/btc"),
   selic: () => apiFetch<SelicResponse>("/macro/selic"),
+  referenceTickers: () => apiFetch<ReferenceTickerResponse>("/market/tickers"),
   marketAssets: (filters: { query?: string; assetClass?: string; limit?: number } = {}) => {
     const params = new URLSearchParams();
     if (filters.query) params.set("query", filters.query);

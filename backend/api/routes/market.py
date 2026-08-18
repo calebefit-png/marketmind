@@ -27,9 +27,11 @@ from schemas.market_data import (
     MarketHistoryResponse,
     MarketQuoteRead,
 )
+from schemas.reference_tickers import ReferenceTickerResponse
 from services.bcb_service import bcb_service
 from services.binance_stream import binance_stream_service
 from services.currency import normalize_currency_code
+from services.reference_tickers import reference_ticker_service
 from services.technical_analysis import candles_to_dataframe, compute_indicators
 from services.trend_engine import classify_trend
 
@@ -155,6 +157,12 @@ async def get_selic() -> SelicResponse:
             status_code=502,
             detail="Não foi possível consultar a Selic no BCB.",
         ) from exc
+
+
+@router.get("/market/tickers", response_model=ReferenceTickerResponse)
+async def get_reference_tickers() -> ReferenceTickerResponse:
+    """Retorna referências externas com fonte, status e data de cada indicador."""
+    return ReferenceTickerResponse(items=await reference_ticker_service.get_tickers())
 
 
 @router.get("/market/assets", response_model=MarketAssetListResponse)

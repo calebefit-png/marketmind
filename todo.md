@@ -87,3 +87,4 @@
 - [ ] Verificar a procedência, a defasagem e a comparabilidade dos números exibidos no MarketMind com aplicativos de investimento e busca pública.
 - [x] Remover do portal todo número demonstrativo e substituí-lo por dado verificável, fonte identificada ou estado explícito de indisponibilidade, sem alterar o visual aprovado.
 - [x] Remover os indicadores estáticos remanescentes no ticker do cabeçalho, incluindo dólar, índices e Brent, preservando apenas fontes verificáveis ou indisponibilidade explícita.
+- [x] Integrar individualmente fontes gratuitas e verificáveis para USD/BRL, Ibovespa, IFIX e Brent, exibindo origem e atualização sem alterar o ticker aprovado.

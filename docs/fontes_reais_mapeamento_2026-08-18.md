@@ -9,6 +9,8 @@
 | Criptoativos | [Binance Spot WebSocket Streams](https://developers.binance.com/docs/binance-spot-api-docs/web-socket-streams) | Fluxos de negociação e ticker da Binance. A documentação declara atualização em tempo real para fluxos de negócios e livro; estatísticas de janela de 24 horas atualizam em 1 segundo. O portal já utiliza BTC/USDT dessa fonte. |
 | Taxa básica | Banco Central do Brasil, série SGS 432 | Série pública da Selic já integrada ao backend; exibir sempre a data de referência devolvida pela fonte. |
 | Tesouro Direto | [Histórico de preços e taxas](https://www.tesourodireto.com.br/en/produtos/dados-sobre-titulos/historico-de-precos-e-taxas) | Página oficial com históricos anuais de preços e taxas. A disponibilidade depende do horário de funcionamento e de eventuais manutenções da plataforma; a extração deve tratar indisponibilidade como ausência de dado, nunca como valor estimado. |
+| Ibovespa e IFIX | [Yahoo Finance — ^BVSP](https://finance.yahoo.com/quote/%5EBVSP/) e [Yahoo Finance — IFIX.SA](https://finance.yahoo.com/quote/IFIX.SA/) | Feed público integrado ao ticker com valor, fechamento anterior, horário de mercado e origem identificada. A API classifica a resposta como potencialmente atrasada; o portal não a apresenta como fechamento oficial intradiário da B3. |
+| Brent | [Yahoo Finance — BZ=F](https://finance.yahoo.com/quote/BZ%3DF/) | Cotação do contrato futuro de Brent integrada ao ticker, com moeda, horário de mercado, variação e aviso de possível atraso do feed público. |
 
 ## Decisão de integridade
 
@@ -18,9 +20,14 @@ Nenhum preço, variação, múltiplo, rendimento, patrimônio, índice, câmbio 
 
 - COTAHIST resolve fechamentos de instrumentos B3 cobertos pelo arquivo, mas não fornece streaming nem indicadores fundamentalistas completos.
 - PTAX é taxa oficial de referência e não substitui necessariamente uma cotação comercial em tempo real de corretora.
+- O feed público de Ibovespa, IFIX e Brent pode apresentar atraso e não substitui diretamente a metodologia oficial de fechamento da B3; cada resposta identifica o provedor, horário e status de atraso.
+
+## Endpoint de índices B3 identificado
+
+Uma referência pública de implementação do arquivo oficial da B3 documenta o endpoint `https://sistemaswebb3-listados.b3.com.br/indexStatisticsProxy/IndexCall/GetPortfolioDay`, em JSON, com os parâmetros `index` e `year`. A resposta tem o fechamento por dia (`day`) e mês (`month01` a `month12`), permitindo selecionar o último pregão válido de `IBOV` e `IFIX` e registrar a respectiva data de referência. Fonte de implementação consultada: [rb3 — modelo b3-indexes-historical-data](https://github.com/ropensci/rb3/blob/main/inst/extdata/templates/b3-indexes-historical-data.yaml).
 - A cotação cripto é específica do mercado Binance e pode divergir de outra exchange por spread e liquidez.
 - Dados de ações internacionais, REITs, commodities e fundamentos exigem fonte verificável com condições de uso compatíveis; não serão preenchidos com valores de referência enquanto essa integração não existir.
 
 ## Nota de compilação estática
 
-O frontend usa exportação estática do Next.js. Foi reproduzida localmente a falha de pré-renderização `Cannot read properties of null (reading 'useState'/'useContext')`, documentada na issue [Next.js #85668](https://github.com/vercel/next.js/issues/85668). O relato associa o problema a resolução inconsistente de React em instalações de projeto e sugere limpar dependências e reinstalar a partir do lockfile. A instalação local foi limpa e recriada; a falha persistiu também com Webpack e Next.js 16.3.1. A exportação não será publicada até que a geração seja concluída sem esse erro.
+O frontend usa exportação estática do Next.js. A falha de pré-renderização foi eliminada no script de build ao executar o comando sem herdar `NODE_ENV=development`; a exportação atual foi concluída para as 28 rotas estáticas com Next.js 16.3.1 e Webpack.
